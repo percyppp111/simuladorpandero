@@ -63,6 +63,7 @@ export default function Home() {
   const [exchangeRateInput, setExchangeRateInput] = useState(
     String(DEFAULT_EXCHANGE_RATE),
   );
+  const [exchangeRate, setExchangeRate] = useState(DEFAULT_EXCHANGE_RATE);
   const [groupProgress, setGroupProgress] = useState(MIN_SIMULATOR_VALUE);
   const [auctionMonth, setAuctionMonth] = useState(MIN_SIMULATOR_VALUE);
   const [auctionPayments, setAuctionPayments] = useState(12);
@@ -107,11 +108,6 @@ export default function Home() {
     monthlyPayment,
     termMonths,
   );
-  const parsedExchangeRate = Number.parseFloat(exchangeRateInput);
-  const exchangeRate =
-    Number.isFinite(parsedExchangeRate) && parsedExchangeRate > 0
-      ? parsedExchangeRate
-      : 0;
   const toPen = (value: number) => convertUsdToPen(value, exchangeRate);
 
   const updateAuctionMonth = (month: number) => {
@@ -279,16 +275,34 @@ export default function Home() {
                         name="exchangeRate"
                         type="number"
                         inputMode="decimal"
+                        enterKeyHint="done"
                         min="0.01"
                         step="0.01"
                         value={exchangeRateInput}
-                        onChange={(event) =>
-                          setExchangeRateInput(event.target.value)
-                        }
-                        onBlur={() =>
-                          exchangeRate === 0 &&
-                          setExchangeRateInput(String(DEFAULT_EXCHANGE_RATE))
-                        }
+                        onChange={(event) => {
+                          const input = event.target.value;
+                          const value = Number.parseFloat(input);
+
+                          setExchangeRateInput(input);
+                          if (Number.isFinite(value) && value > 0) {
+                            setExchangeRate(value);
+                          }
+                        }}
+                        onBlur={(event) => {
+                          const value = Number.parseFloat(
+                            event.currentTarget.value,
+                          );
+
+                          if (!Number.isFinite(value) || value <= 0) {
+                            setExchangeRateInput(String(exchangeRate));
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.preventDefault();
+                            event.currentTarget.blur();
+                          }
+                        }}
                         className="h-9 w-[4.75rem] px-2 text-right font-medium"
                       />
                       <span className="text-xs text-muted-foreground">PEN</span>
