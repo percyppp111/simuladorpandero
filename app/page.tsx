@@ -1,17 +1,12 @@
 'use client';
 
 import { Fragment, useState } from 'react';
-import {
-  Banknote,
-  Car,
-  Flag,
-  Gift,
-  Info,
-  TrendingDown,
-  TrendingUp,
-  Trash2,
-} from 'lucide-react';
+import { Car, Flag, Gift, Trash2 } from 'lucide-react';
 
+import {
+  AuctionMonthSection,
+  AuctionPaymentsSection,
+} from '@/components/simulator/auction-sections';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -28,11 +23,8 @@ import {
   formatPen,
   formatUsd,
   GROUP_PROGRESS_OPTIONS,
-  MAX_AUCTION_MONTH,
   MIN_SIMULATOR_VALUE,
   normalizeGroupProgress,
-  QUICK_AUCTION_MONTHS,
-  QUICK_AUCTION_PAYMENTS,
   SCENARIO_NAMES,
   TOTAL_TERM_MONTHS,
 } from '@/lib/simulator';
@@ -89,7 +81,6 @@ export default function Home() {
     cuotasPagadas: paidPayments,
     cuotasAdelantadas: advancedPayments,
     cuotasRestantes: remainingPayments,
-    maximoCuotasAdelantadas: maxAuctionPayments,
   } = calculatePlan(auctionMonth, auctionPayments, groupProgress);
   const visiblePlanMonths = groupAdvance + paidPayments + remainingPayments;
   const auctionMarkerPercent =
@@ -369,201 +360,23 @@ export default function Home() {
             </div>
           </section>
 
-          <section
-            className="bg-card p-3 lg:col-span-6"
-            aria-labelledby="auctionMonthTitle"
-          >
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="section-number">3</span>
-                <h2 id="auctionMonthTitle" className="section-title">
-                  Mes de remate
-                </h2>
-              </div>
-              <strong className="text-lg text-primary">
-                Mes {auctionMonth}
-              </strong>
-            </div>
-            <input
-              id="auctionMonth"
-              name="auctionMonth"
-              type="range"
-              min={MIN_SIMULATOR_VALUE}
-              max={MAX_AUCTION_MONTH}
-              value={auctionMonth}
-              onChange={(event) =>
-                updateAuctionMonth(Number(event.target.value))
-              }
-              className="simulator-slider"
-              aria-labelledby="auctionMonthTitle"
-            />
-            <div className="mt-1.5 flex gap-1">
-              {QUICK_AUCTION_MONTHS.map((month) => (
-                <Button
-                  key={month}
-                  type="button"
-                  size="sm"
-                  variant={auctionMonth === month ? 'default' : 'outline'}
-                  className="h-8 min-w-0 flex-1 px-1 text-xs transition-colors duration-150 active:translate-y-0"
-                  onClick={() => updateAuctionMonth(month)}
-                  aria-pressed={auctionMonth === month}
-                >
-                  <span className="sm:hidden">{month}</span>
-                  <span className="hidden sm:inline">Mes {month}</span>
-                </Button>
-              ))}
-            </div>
-            {auctionMonth > MIN_SIMULATOR_VALUE && (
-              <p className="mt-1.5 flex items-center gap-1.5 border-t pt-1.5 text-[10px] whitespace-nowrap text-muted-foreground">
-                <Info className="size-3 shrink-0" aria-hidden="true" />
-                Chance de adjudicar por sorteo antes del remate
-              </p>
-            )}
-          </section>
+          <AuctionMonthSection
+            auctionMonth={auctionMonth}
+            onMonthChange={updateAuctionMonth}
+          />
 
-          <section
-            className="bg-card p-3 lg:col-span-6"
-            aria-labelledby="auctionPaymentsTitle"
-          >
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <span className="section-number">4</span>
-                <h2 id="auctionPaymentsTitle" className="section-title">
-                  Cuotas de remate
-                </h2>
-              </div>
-              <strong className="text-lg text-primary">
-                {auctionPayments}
-              </strong>
-            </div>
-            <input
-              id="auctionPayments"
-              name="auctionPayments"
-              type="range"
-              min={MIN_SIMULATOR_VALUE}
-              max={maxAuctionPayments}
-              value={auctionPayments}
-              onChange={(event) =>
-                updateAuctionPayments(Number(event.target.value))
-              }
-              className="simulator-slider"
-              aria-labelledby="auctionPaymentsTitle"
-            />
-            <div className="mt-1.5 flex gap-1">
-              {QUICK_AUCTION_PAYMENTS.map((payments) => (
-                <Button
-                  key={payments}
-                  type="button"
-                  size="sm"
-                  variant={auctionPayments === payments ? 'default' : 'outline'}
-                  className="h-8 min-w-0 flex-1 px-1 text-xs transition-colors duration-150 active:translate-y-0"
-                  onClick={() => updateAuctionPayments(payments)}
-                  aria-pressed={auctionPayments === payments}
-                >
-                  {payments}
-                </Button>
-              ))}
-            </div>
-            <div className="mt-2 rounded-lg border border-primary/20 bg-primary/[0.06] p-2.5">
-              <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-md border border-primary/15 bg-card/70 p-2">
-                <span className="flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Banknote className="size-5" aria-hidden="true" />
-                </span>
-                <span className="text-sm font-semibold">Capital de Remate</span>
-                <span className="text-right">
-                  <strong className="block text-xl font-semibold tracking-tight text-primary">
-                    {formatUsd(auctionAmount)}
-                  </strong>
-                  <span className="block text-xs font-medium text-muted-foreground">
-                    {formatPen(toPen(auctionAmount))}
-                  </span>
-                </span>
-              </div>
-              <p className="pb-1.5 pt-2.5 text-sm font-semibold">
-                Simulación de últimas cuotas
-              </p>
-              <dl className="space-y-1.5">
-                <div className="rounded-md border border-primary/15 bg-card/70 p-2.5">
-                  <dt className="flex min-w-0 items-center gap-2 border-b border-primary/15 pb-2">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <TrendingUp className="size-4" aria-hidden="true" />
-                    </span>
-                    <span className="min-w-0">
-                      <strong className="block truncate text-base text-primary">
-                        Opción A
-                      </strong>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        Mantener cuota
-                      </span>
-                    </span>
-                  </dt>
-                  <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-2 text-center">
-                    <span className="px-2">
-                      <span className="block text-[10px] text-muted-foreground">
-                        Cuotas restantes
-                      </span>
-                      <strong className="block text-2xl leading-tight">
-                        {proratedRemainingPayments}
-                      </strong>
-                      <span className="text-[10px] text-muted-foreground">
-                        cuotas
-                      </span>
-                    </span>
-                    <span className="min-w-0 px-2">
-                      <span className="block text-[10px] text-muted-foreground">
-                        Cuota mensual
-                      </span>
-                      <strong className="block truncate text-xl text-primary">
-                        {formatUsd(monthlyPayment)}
-                      </strong>
-                      <span className="block text-xs text-muted-foreground">
-                        {formatPen(toPen(monthlyPayment))}
-                      </span>
-                    </span>
-                  </dd>
-                </div>
-                <div className="rounded-md border border-primary/15 bg-card/70 p-2.5">
-                  <dt className="flex min-w-0 items-center gap-2 border-b border-primary/15 pb-2">
-                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <TrendingDown className="size-4" aria-hidden="true" />
-                    </span>
-                    <span className="min-w-0">
-                      <strong className="block truncate text-base text-primary">
-                        Opción B
-                      </strong>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        Reducir cuota
-                      </span>
-                    </span>
-                  </dt>
-                  <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-2 text-center">
-                    <span className="px-2">
-                      <span className="block text-[10px] text-muted-foreground">
-                        Cuotas restantes
-                      </span>
-                      <strong className="block text-2xl leading-tight">
-                        {prorationRemainingPayments}
-                      </strong>
-                      <span className="text-[10px] text-muted-foreground">
-                        cuotas
-                      </span>
-                    </span>
-                    <span className="min-w-0 px-2">
-                      <span className="block text-[10px] text-muted-foreground">
-                        Cuota mensual
-                      </span>
-                      <strong className="block truncate text-xl text-primary">
-                        {formatUsd(proratedPayment)}
-                      </strong>
-                      <span className="block text-xs text-muted-foreground">
-                        {formatPen(toPen(proratedPayment))}
-                      </span>
-                    </span>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-          </section>
+          <AuctionPaymentsSection
+            auctionPayments={auctionPayments}
+            onPaymentsChange={updateAuctionPayments}
+            auctionAmountUsd={formatUsd(auctionAmount)}
+            auctionAmountPen={formatPen(toPen(auctionAmount))}
+            optionARemainingPayments={proratedRemainingPayments}
+            optionAPaymentUsd={formatUsd(monthlyPayment)}
+            optionAPaymentPen={formatPen(toPen(monthlyPayment))}
+            optionBRemainingPayments={prorationRemainingPayments}
+            optionBPaymentUsd={formatUsd(proratedPayment)}
+            optionBPaymentPen={formatPen(toPen(proratedPayment))}
+          />
 
           <section
             className="bg-card p-3 lg:col-span-12"
