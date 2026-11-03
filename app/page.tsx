@@ -1,6 +1,13 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState } from 'react';
+import {
+  Fragment,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   CalendarCheck2,
   Car,
@@ -57,6 +64,24 @@ type ComparisonRow = {
   primary: (scenario: SavedScenario) => string;
   secondary?: (scenario: SavedScenario) => string;
 };
+
+type TimelineDragKind = 'start' | 'linked' | 'end';
+
+type TimelineDragSnapshot = {
+  kind: TimelineDragKind;
+  pointerId: number;
+  originX: number;
+  barWidth: number;
+  groupProgress: number;
+  auctionMonth: number;
+  auctionPayments: number;
+};
+
+const TIMELINE_AUCTION_MONTH_MAX = 18;
+const TIMELINE_AUCTION_PAYMENTS_MAX = 35;
+
+const clampTimelineValue = (value: number, minimum: number, maximum: number) =>
+  Math.min(Math.max(value, minimum), maximum);
 
 const getMilestoneFlagPosition = (
   markerPercent: number,
@@ -137,6 +162,8 @@ export default function Home() {
   const [auctionPayments, setAuctionPayments] = useState(12);
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
   const planFigureRef = useRef<HTMLElement>(null);
+  const planBarRef = useRef<HTMLDivElement>(null);
+  const timelineDragRef = useRef<TimelineDragSnapshot | null>(null);
   const [planFigureWidth, setPlanFigureWidth] = useState(0);
 
   useEffect(() => {
@@ -232,6 +259,159 @@ export default function Home() {
 
     setGroupProgress(normalizedProgress);
     setAuctionPayments(adjustedPlan.cuotasAdelantadas);
+  };
+
+  const applyStartTimelineOffset = (
+    initialGroupProgress: number,
+    initialAuctionMonth: number,
+    offset: number,
+  ) => {
+    const fixedAuctionPosition =
+      initialGroupProgress + initialAuctionMonth - MIN_SIMULATOR_VALUE;
+    const minimumGroupAdvance = Math.max(
+      0,
+      fixedAuctionPosition - TIMELINE_AUCTION_MONTH_MAX,
+    );
+    const maximumGroupAdvance = Math.min(
+      GROUP_PROGRESS_OPTIONS.length - MIN_SIMULATOR_VALUE,
+      fixedAuctionPosition - MIN_SIMULATOR_VALUE,
+    );
+    const initialGroupAdvance = initialGroupProgress - MIN_SIMULATOR_VALUE;
+    const nextGroupAdvance = clampTimelineValue(
+      initialGroupAdvance + offset,
+      minimumGroupAdvance,
+      maximumGroupAdvance,
+    );
+    const nextAuctionMonth = fixedAuctionPosition - nextGroupAdvance;
+
+    setGroupProgress(nextGroupAdvance + MIN_SIMULATOR_VALUE);
+    setAuctionMonth(nextAuctionMonth);
+  };
+
+  const applyLinkedTimelineOffset = (
+    initialAuctionMonth: number,
+    initialAuctionPayments: number,
+    offset: number,
+  ) => {
+    const minimumOffset = Math.max(
+      MIN_SIMULATOR_VALUE - initialAuctionMonth,
+      initialAuctionPayments - TIMELINE_AUCTION_PAYMENTS_MAX,
+    );
+    const maximumOffset = Math.min(
+      TIMELINE_AUCTION_MONTH_MAX - initialAuctionMonth,
+      initialAuctionPayments - MIN_SIMULATOR_VALUE,
+    );
+    const nextOffset = clampTimelineValue(offset, minimumOffset, maximumOffset);
+
+    setAuctionMonth(initialAuctionMonth + nextOffset);
+    setAuctionPayments(initialAuctionPayments - nextOffset);
+  };
+
+  const applyEndTimelineOffset = (
+    initialGroupProgress: number,
+    initialAuctionMonth: number,
+    initialAuctionPayments: number,
+    offset: number,
+  ) => {
+    const maximumPayments = Math.min(
+      TIMELINE_AUCTION_PAYMENTS_MAX,
+      TOTAL_TERM_MONTHS -
+        (initialGroupProgress - MIN_SIMULATOR_VALUE) -
+        initialAuctionMonth,
+    );
+    const nextPayments = clampTimelineValue(
+      initialAuctionPayments - offset,
+      MIN_SIMULATOR_VALUE,
+      maximumPayments,
+    );
+
+    setAuctionPayments(nextPayments);
+  };
+
+  const startTimelineDrag = (
+    kind: TimelineDragKind,
+    event: ReactPointerEvent<HTMLButtonElement>,
+  ) => {
+    const bar = planBarRef.current;
+    if (!bar) return;
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    timelineDragRef.current = {
+      kind,
+      pointerId: event.pointerId,
+      originX: event.clientX,
+      barWidth: bar.getBoundingClientRect().width,
+      groupProgress,
+      auctionMonth,
+      auctionPayments,
+    };
+  };
+
+  const moveTimelineDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = timelineDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId || drag.barWidth <= 0) {
+      return;
+    }
+
+    event.preventDefault();
+    const offset = Math.round(
+      ((event.clientX - drag.originX) / drag.barWidth) * TOTAL_TERM_MONTHS,
+    );
+
+    if (drag.kind === 'start') {
+      applyStartTimelineOffset(drag.groupProgress, drag.auctionMonth, offset);
+      return;
+    }
+
+    if (drag.kind === 'end') {
+      applyEndTimelineOffset(
+        drag.groupProgress,
+        drag.auctionMonth,
+        drag.auctionPayments,
+        offset,
+      );
+      return;
+    }
+
+    applyLinkedTimelineOffset(drag.auctionMonth, drag.auctionPayments, offset);
+  };
+
+  const stopTimelineDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = timelineDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    timelineDragRef.current = null;
+  };
+
+  const handleTimelineKeyDown = (
+    kind: TimelineDragKind,
+    event: ReactKeyboardEvent<HTMLButtonElement>,
+  ) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+
+    event.preventDefault();
+    const offset = event.key === 'ArrowRight' ? 1 : -1;
+
+    if (kind === 'start') {
+      applyStartTimelineOffset(groupProgress, auctionMonth, offset);
+      return;
+    }
+
+    if (kind === 'end') {
+      applyEndTimelineOffset(
+        groupProgress,
+        auctionMonth,
+        auctionPayments,
+        offset,
+      );
+      return;
+    }
+
+    applyLinkedTimelineOffset(auctionMonth, auctionPayments, offset);
   };
 
   const removeScenario = (scenarioIndex: number) => {
@@ -543,9 +723,17 @@ export default function Home() {
               className="relative pt-9"
               aria-label={`${groupAdvance} meses de avance, ${paidPayments} cuotas pagadas con sorteo mensual, ${advancedPayments} adelantadas y ${remainingPayments} restantes. Adjudicación por remate en el mes ${auctionMonth}`}
             >
-              <span
-                className="absolute top-0 z-20 h-9 w-[82px] -translate-x-1/2"
+              <button
+                type="button"
+                className="absolute top-0 z-20 h-9 w-[82px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 style={{ left: startFlagPosition.flagLeft }}
+                onPointerDown={(event) => startTimelineDrag('start', event)}
+                onPointerMove={moveTimelineDrag}
+                onPointerUp={stopTimelineDrag}
+                onPointerCancel={stopTimelineDrag}
+                onKeyDown={(event) => handleTimelineKeyDown('start', event)}
+                aria-label={`Mover Inicio. Avance de Grupo ${groupProgress}. Usa las flechas izquierda y derecha para ajustar.`}
+                title="Desliza para ajustar el Avance de Grupo"
               >
                 <svg
                   className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm"
@@ -562,17 +750,28 @@ export default function Home() {
                     fill="currentColor"
                   />
                 </svg>
-                <span className="relative flex h-7 items-center justify-center gap-1 px-2 text-primary-foreground">
-                  <Flag className="size-3.5 fill-current" aria-hidden="true" />
-                  <strong className="whitespace-nowrap text-[10px]">
+                <span className="pointer-events-none absolute inset-x-0 top-0 flex h-7 w-full items-center justify-center gap-1.5 px-2 text-center leading-none text-primary-foreground">
+                  <Flag
+                    className="size-3.5 shrink-0 fill-current"
+                    aria-hidden="true"
+                  />
+                  <strong className="whitespace-nowrap text-[10px] leading-none">
                     Inicio
                   </strong>
                 </span>
-              </span>
+              </button>
 
-              <span
-                className={`${placeRemateMarkerBelow ? 'top-[7.25rem]' : 'top-0'} absolute z-20 h-9 w-[90px] -translate-x-1/2`}
+              <button
+                type="button"
+                className={`${placeRemateMarkerBelow ? 'top-[7.25rem]' : 'top-0'} absolute z-20 h-9 w-[90px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`}
                 style={{ left: auctionFlagPosition.flagLeft }}
+                onPointerDown={(event) => startTimelineDrag('linked', event)}
+                onPointerMove={moveTimelineDrag}
+                onPointerUp={stopTimelineDrag}
+                onPointerCancel={stopTimelineDrag}
+                onKeyDown={(event) => handleTimelineKeyDown('linked', event)}
+                aria-label={`Mover Remate y Fin de cuotas juntos. Mes de remate ${auctionMonth}, ${auctionPayments} cuotas de remate. Usa las flechas izquierda y derecha para ajustar.`}
+                title="Desliza para mover Remate y Fin de cuotas juntos"
               >
                 <svg
                   className="absolute inset-0 h-9 w-full overflow-visible text-amber-500 drop-shadow-sm"
@@ -590,18 +789,29 @@ export default function Home() {
                   />
                 </svg>
                 <span
-                  className={`${placeRemateMarkerBelow ? 'mt-2' : ''} relative flex h-7 items-center justify-center gap-1 px-2 text-white`}
+                  className={`${placeRemateMarkerBelow ? 'top-2' : 'top-0'} pointer-events-none absolute inset-x-0 flex h-7 w-full items-center justify-center gap-1.5 px-2 text-center leading-none text-white`}
                 >
-                  <CircleDollarSign className="size-3.5" aria-hidden="true" />
-                  <strong className="whitespace-nowrap text-[10px]">
+                  <CircleDollarSign
+                    className="size-3.5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <strong className="whitespace-nowrap text-[10px] leading-none">
                     Remate
                   </strong>
                 </span>
-              </span>
+              </button>
 
-              <span
-                className="absolute top-0 z-20 h-9 w-[108px] -translate-x-1/2"
+              <button
+                type="button"
+                className="absolute top-0 z-20 h-9 w-[108px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 style={{ left: endFlagPosition.flagLeft }}
+                onPointerDown={(event) => startTimelineDrag('end', event)}
+                onPointerMove={moveTimelineDrag}
+                onPointerUp={stopTimelineDrag}
+                onPointerCancel={stopTimelineDrag}
+                onKeyDown={(event) => handleTimelineKeyDown('end', event)}
+                aria-label={`Mover únicamente Fin de cuotas. ${auctionPayments} cuotas adelantadas. Usa las flechas izquierda y derecha para ajustar.`}
+                title="Desliza para mover únicamente Fin de cuotas"
               >
                 <svg
                   className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm"
@@ -618,15 +828,15 @@ export default function Home() {
                     fill="currentColor"
                   />
                 </svg>
-                <span className="relative flex h-7 items-center justify-center gap-1 px-2 text-primary-foreground">
-                  <Flag className="size-3.5" aria-hidden="true" />
-                  <strong className="whitespace-nowrap text-[10px]">
+                <span className="pointer-events-none absolute inset-x-0 top-0 flex h-7 w-full items-center justify-center gap-1.5 px-2 text-center leading-none text-primary-foreground">
+                  <Flag className="size-3.5 shrink-0" aria-hidden="true" />
+                  <strong className="whitespace-nowrap text-[10px] leading-none">
                     Fin de cuotas
                   </strong>
                 </span>
-              </span>
+              </button>
 
-              <div className="relative">
+              <div ref={planBarRef} className="relative">
                 <div className="flex h-20 w-full overflow-hidden rounded-xl border border-primary/20 bg-muted">
                   {groupAdvance > 0 && (
                     <span
