@@ -1,7 +1,15 @@
 'use client';
 
-import { Fragment, useState } from 'react';
-import { Car, Flag, Gift, Trash2 } from 'lucide-react';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import {
+  CalendarCheck2,
+  Car,
+  CircleDollarSign,
+  Coins,
+  CreditCard,
+  Flag,
+  Trash2,
+} from 'lucide-react';
 
 import {
   AuctionMonthSection,
@@ -50,6 +58,74 @@ type ComparisonRow = {
   secondary?: (scenario: SavedScenario) => string;
 };
 
+const getMilestoneFlagPosition = (
+  markerPercent: number,
+  flagWidth: number,
+  containerWidth: number,
+) => {
+  const measuredWidth = containerWidth || 320;
+  const halfFlagWidth = flagWidth / 2;
+  const markerX = (markerPercent / 100) * measuredWidth;
+  const centerX = Math.min(
+    Math.max(markerX, halfFlagWidth),
+    measuredWidth - halfFlagWidth,
+  );
+
+  return {
+    flagLeft: centerX,
+    tailLeft: markerX - (centerX - halfFlagWidth),
+  };
+};
+
+const getMilestoneFlagPath = (
+  flagWidth: number,
+  tailLeft: number,
+  placement: 'above' | 'below',
+) => {
+  const radius = 8;
+  const halfTailWidth = 6;
+  const tailBaseCenter = Math.min(
+    Math.max(tailLeft, radius + halfTailWidth),
+    flagWidth - radius - halfTailWidth,
+  );
+  const tailStart = tailBaseCenter - halfTailWidth;
+  const tailEnd = tailBaseCenter + halfTailWidth;
+
+  if (placement === 'below') {
+    return [
+      `M ${radius} 8`,
+      `H ${tailStart}`,
+      `L ${tailLeft} 0`,
+      `L ${tailEnd} 8`,
+      `H ${flagWidth - radius}`,
+      `Q ${flagWidth} 8 ${flagWidth} ${8 + radius}`,
+      `V ${36 - radius}`,
+      `Q ${flagWidth} 36 ${flagWidth - radius} 36`,
+      `H ${radius}`,
+      `Q 0 36 0 ${36 - radius}`,
+      `V ${8 + radius}`,
+      `Q 0 8 ${radius} 8`,
+      'Z',
+    ].join(' ');
+  }
+
+  return [
+    `M ${radius} 0`,
+    `H ${flagWidth - radius}`,
+    `Q ${flagWidth} 0 ${flagWidth} ${radius}`,
+    `V ${28 - radius}`,
+    `Q ${flagWidth} 28 ${flagWidth - radius} 28`,
+    `H ${tailEnd}`,
+    `L ${tailLeft} 36`,
+    `L ${tailStart} 28`,
+    `H ${radius}`,
+    `Q 0 28 0 ${28 - radius}`,
+    `V ${radius}`,
+    `Q 0 0 ${radius} 0`,
+    'Z',
+  ].join(' ');
+};
+
 export default function Home() {
   const [certificateId, setCertificateId] = useState(CERTIFICATES[0].id);
   const [exchangeRateInput, setExchangeRateInput] = useState(
@@ -60,7 +136,21 @@ export default function Home() {
   const [auctionMonth, setAuctionMonth] = useState(MIN_SIMULATOR_VALUE);
   const [auctionPayments, setAuctionPayments] = useState(12);
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
+  const planFigureRef = useRef<HTMLElement>(null);
+  const [planFigureWidth, setPlanFigureWidth] = useState(0);
 
+  useEffect(() => {
+    const figure = planFigureRef.current;
+    if (!figure) return;
+
+    const updateWidth = () => setPlanFigureWidth(figure.clientWidth);
+    updateWidth();
+
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(figure);
+
+    return () => observer.disconnect();
+  }, []);
   const selectedCertificate =
     CERTIFICATES.find((certificate) => certificate.id === certificateId) ??
     CERTIFICATES[0];
@@ -82,12 +172,32 @@ export default function Home() {
     cuotasAdelantadas: advancedPayments,
     cuotasRestantes: remainingPayments,
   } = calculatePlan(auctionMonth, auctionPayments, groupProgress);
-  const visiblePlanMonths = groupAdvance + paidPayments + remainingPayments;
+  const planTimelineMonths =
+    groupAdvance + paidPayments + remainingPayments + advancedPayments;
+  const startMarkerPercent = (groupAdvance / planTimelineMonths) * 100;
   const auctionMarkerPercent =
-    ((groupAdvance + paidPayments) / visiblePlanMonths) * 100;
-  const paidCenterPercent =
-    ((groupAdvance + paidPayments / 2) / visiblePlanMonths) * 100;
-  const showRaffleGift = paidPayments >= 5;
+    ((groupAdvance + paidPayments) / planTimelineMonths) * 100;
+  const endMarkerPercent =
+    ((groupAdvance + paidPayments + remainingPayments) / planTimelineMonths) *
+    100;
+  const placeRemateMarkerBelow =
+    auctionMarkerPercent - startMarkerPercent < 22 ||
+    endMarkerPercent - auctionMarkerPercent < 22;
+  const startFlagPosition = getMilestoneFlagPosition(
+    startMarkerPercent,
+    82,
+    planFigureWidth,
+  );
+  const auctionFlagPosition = getMilestoneFlagPosition(
+    auctionMarkerPercent,
+    90,
+    planFigureWidth,
+  );
+  const endFlagPosition = getMilestoneFlagPosition(
+    endMarkerPercent,
+    108,
+    planFigureWidth,
+  );
   const auctionAmount = monthlyPayment * advancedPayments;
   const {
     cuotasRestantes: proratedRemainingPayments,
@@ -188,32 +298,43 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="grid gap-px overflow-hidden rounded-xl border bg-border lg:grid-cols-12">
-          <section
-            className="bg-card p-3 lg:col-span-12"
-            aria-labelledby="certificateTitle"
-          >
-            <div className="grid gap-3 md:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.35fr)] md:gap-4">
-              <div>
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="section-number">1</span>
-                  <h2 id="certificateTitle" className="section-title">
-                    Certificado
-                  </h2>
+        <div className="grid gap-0 bg-transparent lg:grid-cols-12">
+          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.6fr)] lg:items-stretch lg:gap-4">
+            <div className="grid gap-3 lg:h-full lg:grid-rows-[auto_1fr]">
+              <section
+                className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
+                aria-labelledby="certificateTitle"
+              >
+                <div className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-blue-50 to-sky-100 px-4 pb-5 pt-4">
+                  <div className="absolute -bottom-8 left-1/3 h-20 w-64 rotate-[-8deg] rounded-[50%] bg-white/40" />
+                  <div className="relative flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center">
+                      <h2
+                        id="certificateTitle"
+                        className="text-xl font-bold tracking-tight text-slate-950"
+                      >
+                        Certificado
+                      </h2>
+                    </div>
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-sky-200 bg-white/75 text-primary shadow-sm backdrop-blur-sm">
+                      <CreditCard className="size-6" aria-hidden="true" />
+                    </span>
+                  </div>
                 </div>
-                <div className="space-y-2.5">
-                  <div className="grid grid-cols-[minmax(0,2fr)_minmax(105px,0.7fr)] gap-2">
+
+                <div className="relative -mt-2 rounded-t-[1.7rem] bg-white px-4 pb-4 pt-5">
+                  <div className="grid grid-cols-[minmax(0,2fr)_minmax(108px,0.9fr)] gap-2.5">
                     <div>
                       <Label
                         htmlFor="certificate"
-                        className="mb-1 block text-[11px] text-muted-foreground"
+                        className="mb-1.5 block text-xs font-medium text-slate-600"
                       >
                         Certificado
                       </Label>
                       <select
                         id="certificate"
                         name="certificate"
-                        className="compact-select"
+                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-medium outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
                         value={certificateId}
                         onChange={(event) =>
                           setCertificateId(event.target.value)
@@ -229,14 +350,14 @@ export default function Home() {
                     <div>
                       <Label
                         htmlFor="groupProgress"
-                        className="mb-1 block text-[11px] text-muted-foreground"
+                        className="mb-1.5 block whitespace-nowrap text-xs font-medium text-slate-600"
                       >
                         Avance de Grupo
                       </Label>
                       <select
                         id="groupProgress"
                         name="groupProgress"
-                        className="compact-select"
+                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-medium outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
                         value={groupProgress}
                         onChange={(event) =>
                           updateGroupProgress(Number(event.target.value))
@@ -250,17 +371,16 @@ export default function Home() {
                       </select>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-2 border-t pt-2">
+
+                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-sky-200 pt-3">
                     <Label
                       htmlFor="exchangeRate"
-                      className="text-xs leading-tight"
+                      className="max-w-28 text-xs font-semibold leading-tight text-slate-900"
                     >
                       Tipo de cambio referencial
                     </Label>
                     <div className="flex shrink-0 items-center justify-end gap-1.5">
-                      <span className="text-xs text-muted-foreground">
-                        1 USD =
-                      </span>
+                      <span className="text-xs text-slate-500">1 USD =</span>
                       <Input
                         id="exchangeRate"
                         name="exchangeRate"
@@ -294,92 +414,122 @@ export default function Home() {
                             event.currentTarget.blur();
                           }
                         }}
-                        className="h-9 w-[4.75rem] px-2 text-right font-medium"
+                        className="h-10 w-[4.75rem] rounded-xl px-2 text-center text-base font-medium"
                       />
-                      <span className="text-xs text-muted-foreground">PEN</span>
+                      <span className="text-xs text-slate-500">PEN</span>
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <div className="rounded-lg border border-primary/20 bg-primary/[0.06] p-3 md:p-3.5">
-                <div className="flex items-center gap-2">
-                  <span className="section-number">2</span>
-                  <h2 id="certificateSummaryTitle" className="section-title">
-                    Resumen
-                  </h2>
+              <section
+                className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
+                aria-labelledby="certificateSummaryTitle"
+              >
+                <div className="relative overflow-hidden bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-4 py-3.5 text-white">
+                  <div className="absolute -bottom-8 right-4 h-20 w-52 rotate-[-8deg] rounded-[50%] bg-sky-300/20" />
+                  <div className="relative flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-primary shadow-sm">
+                        1
+                      </span>
+                      <span className="min-w-0">
+                        <h2
+                          id="certificateSummaryTitle"
+                          className="text-lg font-bold leading-tight tracking-tight"
+                        >
+                          Plan de Financiamiento
+                        </h2>
+                        <span className="mt-0.5 block text-[11px] font-medium leading-tight text-white/85">
+                          Resumen Pandero 0KM y Seminuevos
+                        </span>
+                      </span>
+                    </div>
+                    <Coins className="size-8 shrink-0" aria-hidden="true" />
+                  </div>
                 </div>
-                <dl className="mt-2 divide-y divide-primary/15">
-                  <div className="flex items-end justify-between gap-3 pb-2">
-                    <dt className="text-sm font-medium text-muted-foreground">
-                      Certificado por
-                    </dt>
-                    <dd className="text-2xl font-semibold tracking-tight text-primary sm:text-3xl">
+
+                <dl className="divide-y divide-sky-100 px-4 pb-4 pt-2">
+                  <div className="flex items-center justify-between gap-3 py-2.5">
+                    <dt className="text-sm text-slate-700">Certificado por</dt>
+                    <dd className="text-lg font-bold tracking-tight text-primary">
                       {formatUsd(selectedCertificate.amountUsd)}
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-3 py-2">
-                    <dt className="text-sm">C. de Inscripción</dt>
-                    <dd className="text-right text-sm font-semibold">
+                  <div className="flex items-center justify-between gap-3 py-2.5">
+                    <dt className="text-sm text-slate-700">
+                      C. de Inscripción
+                    </dt>
+                    <dd className="whitespace-nowrap text-right text-base font-bold text-slate-950">
                       {formatUsd(registrationFee)}
-                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                      <span className="ml-1.5 text-xs font-normal text-slate-500">
                         (4% + IGV)
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-3 py-2">
-                    <dt className="text-sm">Cuota mensual</dt>
-                    <dd className="text-right text-base font-semibold text-sky-600 dark:text-sky-400">
+                  <div className="flex items-center justify-between gap-3 py-2.5">
+                    <dt className="text-sm text-slate-700">Cuota mensual</dt>
+                    <dd className="whitespace-nowrap text-right text-base font-bold text-sky-600">
                       {formatUsd(monthlyPayment)}
-                      <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                      <span className="ml-1.5 text-xs font-normal text-slate-500">
                         {formatPen(toPen(monthlyPayment))}
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-3 py-2">
-                    <dt className="text-sm">Plazo</dt>
-                    <dd className="text-sm font-semibold">
+                  <div className="flex items-center justify-between gap-3 py-2.5">
+                    <dt className="text-sm text-slate-700">Plazo</dt>
+                    <dd className="text-base font-bold text-slate-950">
                       {termMonths} meses
                     </dd>
                   </div>
-                  <div className="-mx-1 mt-1 flex items-center justify-between gap-3 rounded-md bg-primary px-2.5 py-2.5 text-primary-foreground">
-                    <dt className="text-sm font-semibold">
-                      Total para ingreso
-                    </dt>
-                    <dd className="text-right font-bold tracking-tight">
-                      <span className="block text-lg">
-                        {formatUsd(totalEntry)}
-                      </span>
-                      <span className="block text-sm font-medium opacity-80">
-                        {formatPen(toPen(totalEntry))}
-                      </span>
-                    </dd>
+                  <div className="relative -mx-1 mt-2 overflow-hidden rounded-2xl bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-3.5 py-3 text-white shadow-sm">
+                    <span className="absolute inset-y-0 left-[58%] w-16 skew-x-[-28deg] bg-sky-400/25" />
+                    <div className="relative flex items-center justify-between gap-3">
+                      <dt className="min-w-0">
+                        <span className="block text-base font-bold leading-tight lg:text-lg">
+                          Total para ingreso
+                        </span>
+                        <span className="mt-1 block text-[10px] font-medium leading-tight text-white/80 sm:text-[11px]">
+                          (C. de Inscripción + 1ra Cuota)
+                        </span>
+                      </dt>
+                      <dd className="text-right font-bold tracking-tight">
+                        <span className="block text-xl">
+                          {formatUsd(totalEntry)}
+                        </span>
+                        <span className="block text-sm font-medium text-white/85">
+                          {formatPen(toPen(totalEntry))}
+                        </span>
+                      </dd>
+                    </div>
                   </div>
                 </dl>
-              </div>
+              </section>
             </div>
-          </section>
 
-          <AuctionMonthSection
-            auctionMonth={auctionMonth}
-            onMonthChange={updateAuctionMonth}
-          />
+            <div className="grid gap-0 bg-transparent lg:self-start lg:grid-cols-2">
+              <AuctionMonthSection
+                auctionMonth={auctionMonth}
+                onMonthChange={updateAuctionMonth}
+              />
 
-          <AuctionPaymentsSection
-            auctionPayments={auctionPayments}
-            onPaymentsChange={updateAuctionPayments}
-            auctionAmountUsd={formatUsd(auctionAmount)}
-            auctionAmountPen={formatPen(toPen(auctionAmount))}
-            optionARemainingPayments={proratedRemainingPayments}
-            optionAPaymentUsd={formatUsd(monthlyPayment)}
-            optionAPaymentPen={formatPen(toPen(monthlyPayment))}
-            optionBRemainingPayments={prorationRemainingPayments}
-            optionBPaymentUsd={formatUsd(proratedPayment)}
-            optionBPaymentPen={formatPen(toPen(proratedPayment))}
-          />
+              <AuctionPaymentsSection
+                auctionPayments={auctionPayments}
+                onPaymentsChange={updateAuctionPayments}
+                auctionAmountUsd={formatUsd(auctionAmount)}
+                auctionAmountPen={formatPen(toPen(auctionAmount))}
+                optionARemainingPayments={proratedRemainingPayments}
+                optionAPaymentUsd={formatUsd(monthlyPayment)}
+                optionAPaymentPen={formatPen(toPen(monthlyPayment))}
+                optionBRemainingPayments={prorationRemainingPayments}
+                optionBPaymentUsd={formatUsd(proratedPayment)}
+                optionBPaymentPen={formatPen(toPen(proratedPayment))}
+              />
+            </div>
+          </div>
 
           <section
-            className="bg-card p-3 lg:col-span-12"
+            className="mt-3 rounded-3xl border border-primary/15 bg-card p-3 shadow-sm lg:col-span-12"
             aria-labelledby="planTitle"
           >
             <div className="mb-2 flex items-center gap-2">
@@ -389,105 +539,201 @@ export default function Home() {
               </h2>
             </div>
             <figure
-              className="relative pt-10"
+              ref={planFigureRef}
+              className="relative pt-9"
               aria-label={`${groupAdvance} meses de avance, ${paidPayments} cuotas pagadas con sorteo mensual, ${advancedPayments} adelantadas y ${remainingPayments} restantes. Adjudicación por remate en el mes ${auctionMonth}`}
             >
               <span
-                className="absolute top-0 z-10 flex h-8 w-[116px] -translate-x-1/2 items-center justify-center gap-1.5 rounded-md bg-primary px-2 text-primary-foreground shadow-sm"
-                style={{
-                  left: `clamp(58px, ${auctionMarkerPercent}%, calc(100% - 58px))`,
-                }}
+                className="absolute top-0 z-20 h-9 w-[82px] -translate-x-1/2"
+                style={{ left: startFlagPosition.flagLeft }}
               >
-                <Flag className="size-3.5 fill-current" aria-hidden="true" />
-                <span className="whitespace-nowrap text-[10px] font-medium">
-                  Adelantadas
+                <svg
+                  className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm"
+                  viewBox="0 0 82 36"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d={getMilestoneFlagPath(
+                      82,
+                      startFlagPosition.tailLeft,
+                      'above',
+                    )}
+                    fill="currentColor"
+                  />
+                </svg>
+                <span className="relative flex h-7 items-center justify-center gap-1 px-2 text-primary-foreground">
+                  <Flag className="size-3.5 fill-current" aria-hidden="true" />
+                  <strong className="whitespace-nowrap text-[10px]">
+                    Inicio
+                  </strong>
                 </span>
-                <strong className="text-sm">{advancedPayments}</strong>
               </span>
-              <i
-                className="absolute top-7 z-10 size-2 -translate-x-1/2 rotate-45 bg-primary"
-                style={{
-                  left: `clamp(15px, ${auctionMarkerPercent}%, calc(100% - 15px))`,
-                }}
-                aria-hidden="true"
-              />
-              <div className="flex h-16 w-full overflow-hidden rounded-lg border bg-muted">
-                {groupAdvance > 0 && (
+
+              <span
+                className={`${placeRemateMarkerBelow ? 'top-[7.25rem]' : 'top-0'} absolute z-20 h-9 w-[90px] -translate-x-1/2`}
+                style={{ left: auctionFlagPosition.flagLeft }}
+              >
+                <svg
+                  className="absolute inset-0 h-9 w-full overflow-visible text-amber-500 drop-shadow-sm"
+                  viewBox="0 0 90 36"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d={getMilestoneFlagPath(
+                      90,
+                      auctionFlagPosition.tailLeft,
+                      placeRemateMarkerBelow ? 'below' : 'above',
+                    )}
+                    fill="currentColor"
+                  />
+                </svg>
+                <span
+                  className={`${placeRemateMarkerBelow ? 'mt-2' : ''} relative flex h-7 items-center justify-center gap-1 px-2 text-white`}
+                >
+                  <CircleDollarSign className="size-3.5" aria-hidden="true" />
+                  <strong className="whitespace-nowrap text-[10px]">
+                    Remate
+                  </strong>
+                </span>
+              </span>
+
+              <span
+                className="absolute top-0 z-20 h-9 w-[108px] -translate-x-1/2"
+                style={{ left: endFlagPosition.flagLeft }}
+              >
+                <svg
+                  className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm"
+                  viewBox="0 0 108 36"
+                  preserveAspectRatio="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d={getMilestoneFlagPath(
+                      108,
+                      endFlagPosition.tailLeft,
+                      'above',
+                    )}
+                    fill="currentColor"
+                  />
+                </svg>
+                <span className="relative flex h-7 items-center justify-center gap-1 px-2 text-primary-foreground">
+                  <Flag className="size-3.5" aria-hidden="true" />
+                  <strong className="whitespace-nowrap text-[10px]">
+                    Fin de cuotas
+                  </strong>
+                </span>
+              </span>
+
+              <div className="relative">
+                <div className="flex h-20 w-full overflow-hidden rounded-xl border border-primary/20 bg-muted">
+                  {groupAdvance > 0 && (
+                    <span
+                      className="flex h-full min-w-0 items-center justify-center px-1 text-center text-slate-600"
+                      style={{
+                        width: `${(groupAdvance / planTimelineMonths) * 100}%`,
+                        backgroundColor: 'rgb(226 232 240)',
+                        backgroundImage:
+                          'radial-gradient(ellipse at 88% 118%, rgb(148 163 184 / 35%) 0 34%, transparent 35%), linear-gradient(145deg, rgb(248 250 252), rgb(226 232 240))',
+                      }}
+                      title={`Meses de Avance: ${groupAdvance}`}
+                    >
+                      <span className="min-w-0 leading-tight">
+                        <span className="block truncate text-[9px] font-semibold">
+                          {groupAdvance >= 6 ? 'Meses de Avance' : 'Avance'}
+                        </span>
+                        <strong className="block text-lg">
+                          {groupAdvance}
+                        </strong>
+                      </span>
+                    </span>
+                  )}
                   <span
-                    className="flex h-full min-w-0 items-center justify-center bg-sky-300 px-1 text-center text-slate-900 dark:bg-sky-700 dark:text-white"
+                    className="flex h-full min-w-0 items-center justify-center px-0.5 text-center text-white"
                     style={{
-                      width: `${(groupAdvance / visiblePlanMonths) * 100}%`,
+                      width: `${(paidPayments / planTimelineMonths) * 100}%`,
+                      backgroundColor: 'rgb(22 163 74)',
+                      backgroundImage:
+                        'radial-gradient(ellipse at 25% 118%, rgb(132 204 22 / 85%) 0 34%, transparent 35%), linear-gradient(145deg, rgb(74 222 128) 0%, rgb(22 163 74) 45%, rgb(21 128 61) 100%)',
                     }}
-                    title={`Meses de Avance: ${groupAdvance}`}
+                    title={`Pagadas: ${paidPayments}. Periodo con sorteo mensual`}
                   >
                     <span className="min-w-0 leading-tight">
-                      <span className="block truncate text-[9px] font-medium">
-                        {groupAdvance >= 6 ? 'Meses de Avance' : 'Avance'}
+                      <span className="block truncate text-[8px] font-semibold">
+                        Pagadas
                       </span>
-                      <strong className="block text-base">
-                        {groupAdvance}
+                      <strong className="block text-lg">{paidPayments}</strong>
+                    </span>
+                  </span>
+                  <span
+                    className="flex h-full min-w-0 items-center justify-center border-l-2 border-orange-400 px-1 text-center text-white"
+                    style={{
+                      width: `${(remainingPayments / planTimelineMonths) * 100}%`,
+                      backgroundColor: 'rgb(29 78 216)',
+                      backgroundImage:
+                        'radial-gradient(ellipse at 92% 118%, rgb(14 165 233 / 90%) 0 36%, transparent 37%), linear-gradient(145deg, rgb(14 165 233) 0%, rgb(37 99 235) 48%, rgb(30 64 175) 100%)',
+                    }}
+                    title={`Restantes: ${remainingPayments}`}
+                  >
+                    <span className="min-w-0 leading-tight">
+                      <span className="block truncate text-[9px] font-semibold">
+                        Restantes
+                      </span>
+                      <strong className="block text-lg">
+                        {remainingPayments}
                       </strong>
                     </span>
                   </span>
-                )}
-                <span
-                  className="flex h-full min-w-0 items-center justify-center px-0.5 text-center text-white"
-                  style={{
-                    width: `${(paidPayments / visiblePlanMonths) * 100}%`,
-                    backgroundColor: 'rgb(71 85 105)',
-                    backgroundImage:
-                      'radial-gradient(circle, rgb(255 255 255 / 65%) 1px, transparent 1.5px)',
-                    backgroundSize: '7px 7px',
-                  }}
-                  title={`Pagadas: ${paidPayments}. Periodo con sorteo mensual`}
-                >
-                  <span className="min-w-0 leading-tight">
-                    <span className="block truncate text-[8px] font-medium">
-                      Pagadas
+                  <span
+                    className="flex h-full min-w-0 items-center justify-center border-l-2 border-primary/60 px-1 text-center text-slate-500"
+                    style={{
+                      width: `${(advancedPayments / planTimelineMonths) * 100}%`,
+                      backgroundColor: 'rgb(248 250 252 / 88%)',
+                      backgroundImage:
+                        'repeating-linear-gradient(135deg, rgb(148 163 184 / 24%) 0, rgb(148 163 184 / 24%) 1px, transparent 1px, transparent 7px)',
+                    }}
+                    title={`Adelantadas y abonadas: ${advancedPayments}`}
+                  >
+                    <span className="min-w-0 leading-tight opacity-70">
+                      <span className="flex items-center justify-center gap-1 truncate text-[8px] font-semibold">
+                        <CalendarCheck2
+                          className="size-3 shrink-0"
+                          aria-hidden="true"
+                        />
+                        Adelantadas
+                      </span>
+                      <strong className="block text-lg">
+                        {advancedPayments}
+                      </strong>
                     </span>
-                    <strong className="block text-base">{paidPayments}</strong>
                   </span>
-                </span>
+                </div>
+
                 <span
-                  className="flex h-full min-w-0 items-center justify-center border-l border-card/60 bg-muted px-1 text-center text-foreground"
+                  className={`${groupProgress === MIN_SIMULATOR_VALUE ? 'rounded-l-xl' : ''} pointer-events-none absolute inset-y-0 z-20 border-2 border-cyan-300`}
                   style={{
-                    width: `${(remainingPayments / visiblePlanMonths) * 100}%`,
+                    left: `calc(${startMarkerPercent}% - 1px)`,
+                    width: `calc(${endMarkerPercent - startMarkerPercent}% + 2px)`,
+                    boxShadow:
+                      'inset 0 0 0 1px rgb(255 255 255 / 70%), 0 0 10px rgb(34 211 238 / 55%)',
                   }}
-                  title={`Restantes: ${remainingPayments}`}
+                  title="Plazo de financiamiento: cuotas pagadas y cuotas restantes"
+                  aria-hidden="true"
+                />
+
+                <span
+                  className="absolute top-1/2 z-30 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md bg-white/95 text-primary shadow-md ring-1 ring-sky-200"
+                  style={{
+                    left: `clamp(16px, ${auctionMarkerPercent}%, calc(100% - 16px))`,
+                  }}
+                  aria-label="Vehículo adjudicado en el remate"
                 >
-                  <span className="min-w-0 leading-tight">
-                    <span className="block truncate text-[9px] font-medium">
-                      Restantes
-                    </span>
-                    <strong className="block text-base">
-                      {remainingPayments}
-                    </strong>
-                  </span>
+                  <Car className="size-6 stroke-[2.5]" aria-hidden="true" />
                 </span>
               </div>
-              <span
-                className="absolute top-[4.5rem] flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-card text-primary ring-2 ring-primary/30"
-                style={{
-                  left: `clamp(15px, ${auctionMarkerPercent}%, calc(100% - 15px))`,
-                }}
-                aria-hidden="true"
-              >
-                <Car className="size-4" />
-              </span>
-              {showRaffleGift && (
-                <span
-                  className="absolute top-[6.75rem] flex size-7 -translate-x-1/2 items-center justify-center rounded-full bg-slate-600 text-white ring-2 ring-card"
-                  style={{
-                    left: `clamp(15px, ${paidCenterPercent}%, calc(100% - 15px))`,
-                  }}
-                  title="Oportunidad de obtener el vehículo por sorteo"
-                  aria-label="Oportunidad de obtener el vehículo por sorteo"
-                >
-                  <Gift className="size-4" aria-hidden="true" />
-                </span>
-              )}
               <figcaption
-                className={`${showRaffleGift ? 'mt-8' : 'mt-1.5'} flex min-w-0 justify-end text-[10px]`}
+                className={`${placeRemateMarkerBelow ? 'mt-10' : 'mt-1.5'} flex min-w-0 justify-end text-[10px]`}
               >
                 <span className="whitespace-nowrap">
                   <strong className="text-primary">Mes {auctionMonth}</strong>
