@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import {
   Fragment,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -10,16 +11,21 @@ import {
 } from 'react';
 import {
   CalendarCheck2,
-  Car,
+  CalendarDays,
   CircleDollarSign,
+  Clock3,
   Coins,
   CreditCard,
+  ReceiptText,
   Flag,
   Trash2,
+  WalletCards,
 } from 'lucide-react';
 
 import {
+  AuctionCapitalSection,
   AuctionMonthSection,
+  AuctionOptionsSection,
   AuctionPaymentsSection,
 } from '@/components/simulator/auction-sections';
 import { Button } from '@/components/ui/button';
@@ -165,6 +171,7 @@ export default function Home() {
   const planBarRef = useRef<HTMLDivElement>(null);
   const timelineDragRef = useRef<TimelineDragSnapshot | null>(null);
   const [planFigureWidth, setPlanFigureWidth] = useState(0);
+  const [isDesktopTimeline, setIsDesktopTimeline] = useState(false);
 
   useEffect(() => {
     const figure = planFigureRef.current;
@@ -177,6 +184,17 @@ export default function Home() {
     observer.observe(figure);
 
     return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    const desktopQuery = window.matchMedia('(min-width: 1024px)');
+    const updateDesktopTimeline = () =>
+      setIsDesktopTimeline(desktopQuery.matches);
+
+    updateDesktopTimeline();
+    desktopQuery.addEventListener('change', updateDesktopTimeline);
+
+    return () =>
+      desktopQuery.removeEventListener('change', updateDesktopTimeline);
   }, []);
   const selectedCertificate =
     CERTIFICATES.find((certificate) => certificate.id === certificateId) ??
@@ -210,19 +228,22 @@ export default function Home() {
   const placeRemateMarkerBelow =
     auctionMarkerPercent - startMarkerPercent < 22 ||
     endMarkerPercent - auctionMarkerPercent < 22;
+  const timelineFlagWidths = isDesktopTimeline
+    ? { start: 140, auction: 140, end: 132 }
+    : { start: 82, auction: 90, end: 108 };
   const startFlagPosition = getMilestoneFlagPosition(
     startMarkerPercent,
-    82,
+    timelineFlagWidths.start,
     planFigureWidth,
   );
   const auctionFlagPosition = getMilestoneFlagPosition(
     auctionMarkerPercent,
-    90,
+    timelineFlagWidths.auction,
     planFigureWidth,
   );
   const endFlagPosition = getMilestoneFlagPosition(
     endMarkerPercent,
-    108,
+    timelineFlagWidths.end,
     planFigureWidth,
   );
   const auctionAmount = monthlyPayment * advancedPayments;
@@ -466,21 +487,21 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background px-3 py-3 sm:px-5 sm:py-4">
-      <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto w-full max-w-5xl lg:max-w-[76.8rem]">
         <header className="mb-3 border-b pb-2">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
               Pandero
             </p>
-            <h1 className="text-xl font-semibold tracking-tight">
+            <h1 className="text-2xl font-extrabold tracking-tight">
               Simulador de remate
             </h1>
           </div>
         </header>
 
         <div className="grid gap-0 bg-transparent lg:grid-cols-12">
-          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(300px,0.8fr)_minmax(0,1.6fr)] lg:items-stretch lg:gap-4">
-            <div className="grid gap-3 lg:h-full lg:grid-rows-[auto_1fr]">
+          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(300px,21rem)_minmax(0,1fr)] lg:items-stretch lg:gap-4">
+            <div className="grid gap-3 lg:self-start">
               <section
                 className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
                 aria-labelledby="certificateTitle"
@@ -507,7 +528,7 @@ export default function Home() {
                     <div>
                       <Label
                         htmlFor="certificate"
-                        className="mb-1.5 block text-xs font-medium text-slate-600"
+                        className="mb-1.5 block text-sm font-medium text-slate-600"
                       >
                         Certificado
                       </Label>
@@ -530,7 +551,7 @@ export default function Home() {
                     <div>
                       <Label
                         htmlFor="groupProgress"
-                        className="mb-1.5 block whitespace-nowrap text-xs font-medium text-slate-600"
+                        className="mb-1.5 block whitespace-nowrap text-sm font-medium text-slate-600"
                       >
                         Avance de Grupo
                       </Label>
@@ -555,12 +576,14 @@ export default function Home() {
                   <div className="mt-4 flex items-center justify-between gap-2 border-t border-sky-200 pt-3">
                     <Label
                       htmlFor="exchangeRate"
-                      className="max-w-28 text-xs font-semibold leading-tight text-slate-900"
+                      className="max-w-32 text-sm font-bold leading-tight text-slate-900"
                     >
                       Tipo de cambio referencial
                     </Label>
                     <div className="flex shrink-0 items-center justify-end gap-1.5">
-                      <span className="text-xs text-slate-500">1 USD =</span>
+                      <span className="text-sm font-medium text-slate-500">
+                        1 USD =
+                      </span>
                       <Input
                         id="exchangeRate"
                         name="exchangeRate"
@@ -596,7 +619,9 @@ export default function Home() {
                         }}
                         className="h-10 w-[4.75rem] rounded-xl px-2 text-center text-base font-medium"
                       />
-                      <span className="text-xs text-slate-500">PEN</span>
+                      <span className="text-sm font-medium text-slate-500">
+                        PEN
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -606,21 +631,22 @@ export default function Home() {
                 className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
                 aria-labelledby="certificateSummaryTitle"
               >
-                <div className="relative overflow-hidden bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-4 py-3.5 text-white">
+                <div className="relative overflow-hidden bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-4 py-4 text-white">
                   <div className="absolute -bottom-8 right-4 h-20 w-52 rotate-[-8deg] rounded-[50%] bg-sky-300/20" />
                   <div className="relative flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-primary shadow-sm">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-base font-extrabold text-primary shadow-md">
                         1
                       </span>
+                      <span className="h-10 w-px shrink-0 bg-white/70" />
                       <span className="min-w-0">
                         <h2
                           id="certificateSummaryTitle"
-                          className="text-lg font-bold leading-tight tracking-tight"
+                          className="text-xl font-extrabold leading-none tracking-tight lg:text-[17px]"
                         >
                           Plan de Financiamiento
                         </h2>
-                        <span className="mt-0.5 block text-[11px] font-medium leading-tight text-white/85">
+                        <span className="mt-1.5 block text-xs font-medium leading-tight text-white/90">
                           Resumen Pandero 0KM y Seminuevos
                         </span>
                       </span>
@@ -629,55 +655,84 @@ export default function Home() {
                   </div>
                 </div>
 
-                <dl className="divide-y divide-sky-100 px-4 pb-4 pt-2">
-                  <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-sm text-slate-700">Certificado por</dt>
-                    <dd className="text-lg font-bold tracking-tight text-primary">
-                      {formatUsd(selectedCertificate.amountUsd)}
+                <dl className="px-3.5 pb-4 pt-3">
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-2xl border-2 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50/90 px-3 py-3 shadow-[0_5px_14px_rgb(14_165_233/16%)]">
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/80 text-primary shadow-sm">
+                      <WalletCards className="size-6" aria-hidden="true" />
+                    </span>
+                    <dt className="border-l border-sky-300 pl-2.5 text-base font-bold leading-tight text-slate-950">
+                      Certificado
+                    </dt>
+                    <dd className="min-w-0 text-right tabular-nums">
+                      <span className="block whitespace-nowrap text-xl font-extrabold leading-none tracking-tight text-primary">
+                        {formatUsd(selectedCertificate.amountUsd)}
+                      </span>
+                      <span className="mt-1 block whitespace-nowrap text-sm font-medium leading-none text-slate-600">
+                        {formatPen(toPen(selectedCertificate.amountUsd))}
+                      </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-sm text-slate-700">
-                      C. de Inscripción
-                    </dt>
-                    <dd className="whitespace-nowrap text-right text-base font-bold text-slate-950">
+                  <div className="mt-2 flex items-center justify-between gap-3 border-b border-sky-100 py-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
+                        <ReceiptText className="size-4.5" aria-hidden="true" />
+                      </span>
+                      <dt className="text-[15px] font-medium text-slate-800">
+                        C. de Inscripción
+                      </dt>
+                    </div>
+                    <dd className="whitespace-nowrap text-right text-lg font-extrabold tracking-tight text-slate-950 tabular-nums">
                       {formatUsd(registrationFee)}
-                      <span className="ml-1.5 text-xs font-normal text-slate-500">
+                      <span className="ml-1 text-xs font-medium text-slate-500">
                         (4% + IGV)
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-sm text-slate-700">Cuota mensual</dt>
-                    <dd className="whitespace-nowrap text-right text-base font-bold text-sky-600">
+                  <div className="flex items-center justify-between gap-3 border-b border-sky-100 py-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
+                        <CalendarDays className="size-4.5" aria-hidden="true" />
+                      </span>
+                      <dt className="text-[15px] font-medium text-slate-800">
+                        Cuota mensual
+                      </dt>
+                    </div>
+                    <dd className="whitespace-nowrap text-right text-lg font-extrabold tracking-tight text-sky-600 tabular-nums">
                       {formatUsd(monthlyPayment)}
-                      <span className="ml-1.5 text-xs font-normal text-slate-500">
+                      <span className="ml-1 text-xs font-medium text-slate-500">
                         {formatPen(toPen(monthlyPayment))}
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-3 py-2.5">
-                    <dt className="text-sm text-slate-700">Plazo</dt>
-                    <dd className="text-base font-bold text-slate-950">
+                  <div className="flex items-center justify-between gap-3 border-b border-sky-100 py-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
+                        <Clock3 className="size-4.5" aria-hidden="true" />
+                      </span>
+                      <dt className="text-[15px] font-medium text-slate-800">
+                        Plazo
+                      </dt>
+                    </div>
+                    <dd className="whitespace-nowrap text-lg font-extrabold tracking-tight text-slate-950 tabular-nums">
                       {termMonths} meses
                     </dd>
                   </div>
-                  <div className="relative -mx-1 mt-2 overflow-hidden rounded-2xl bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-3.5 py-3 text-white shadow-sm">
+                  <div className="relative mt-3 overflow-hidden rounded-2xl bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-3.5 py-3.5 text-white shadow-md">
                     <span className="absolute inset-y-0 left-[58%] w-16 skew-x-[-28deg] bg-sky-400/25" />
                     <div className="relative flex items-center justify-between gap-3">
                       <dt className="min-w-0">
-                        <span className="block text-base font-bold leading-tight lg:text-lg">
+                        <span className="block text-lg font-extrabold leading-tight">
                           Total para ingreso
                         </span>
-                        <span className="mt-1 block text-[10px] font-medium leading-tight text-white/80 sm:text-[11px]">
+                        <span className="mt-1 block text-[11px] font-medium leading-tight text-white/85">
                           (C. de Inscripción + 1ra Cuota)
                         </span>
                       </dt>
-                      <dd className="text-right font-bold tracking-tight">
-                        <span className="block text-xl">
+                      <dd className="text-right font-bold tracking-tight tabular-nums">
+                        <span className="block whitespace-nowrap text-2xl font-extrabold leading-none">
                           {formatUsd(totalEntry)}
                         </span>
-                        <span className="block text-sm font-medium text-white/85">
+                        <span className="mt-1 block whitespace-nowrap text-base font-medium leading-none text-white/90">
                           {formatPen(toPen(totalEntry))}
                         </span>
                       </dd>
@@ -687,274 +742,314 @@ export default function Home() {
               </section>
             </div>
 
-            <div className="grid gap-0 bg-transparent lg:self-start lg:grid-cols-2">
-              <AuctionMonthSection
-                auctionMonth={auctionMonth}
-                onMonthChange={updateAuctionMonth}
-              />
-
-              <AuctionPaymentsSection
-                auctionPayments={auctionPayments}
-                onPaymentsChange={updateAuctionPayments}
-                auctionAmountUsd={formatUsd(auctionAmount)}
-                auctionAmountPen={formatPen(toPen(auctionAmount))}
-                optionARemainingPayments={proratedRemainingPayments}
-                optionAPaymentUsd={formatUsd(monthlyPayment)}
-                optionAPaymentPen={formatPen(toPen(monthlyPayment))}
-                optionBRemainingPayments={prorationRemainingPayments}
-                optionBPaymentUsd={formatUsd(proratedPayment)}
-                optionBPaymentPen={formatPen(toPen(proratedPayment))}
-              />
-            </div>
-          </div>
-
-          <section
-            className="mt-3 rounded-3xl border border-primary/15 bg-card p-3 shadow-sm lg:col-span-12"
-            aria-labelledby="planTitle"
-          >
-            <div className="mb-2 flex items-center gap-2">
-              <span className="section-number">5</span>
-              <h2 id="planTitle" className="section-title">
-                Plan · {TOTAL_TERM_MONTHS} meses
-              </h2>
-            </div>
-            <figure
-              ref={planFigureRef}
-              className="relative pt-9"
-              aria-label={`${groupAdvance} meses de avance, ${paidPayments} cuotas pagadas con sorteo mensual, ${advancedPayments} adelantadas y ${remainingPayments} restantes. Adjudicación por remate en el mes ${auctionMonth}`}
-            >
-              <button
-                type="button"
-                className="absolute top-0 z-20 h-9 w-[82px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                style={{ left: startFlagPosition.flagLeft }}
-                onPointerDown={(event) => startTimelineDrag('start', event)}
-                onPointerMove={moveTimelineDrag}
-                onPointerUp={stopTimelineDrag}
-                onPointerCancel={stopTimelineDrag}
-                onKeyDown={(event) => handleTimelineKeyDown('start', event)}
-                aria-label={`Mover Inicio. Avance de Grupo ${groupProgress}. Usa las flechas izquierda y derecha para ajustar.`}
-                title="Desliza para ajustar el Avance de Grupo"
-              >
-                <svg
-                  className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm"
-                  viewBox="0 0 82 36"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d={getMilestoneFlagPath(
-                      82,
-                      startFlagPosition.tailLeft,
-                      'above',
-                    )}
-                    fill="currentColor"
-                  />
-                </svg>
-                <span className="pointer-events-none absolute inset-x-0 top-0 flex h-7 w-full items-center justify-center gap-1.5 px-2 text-center leading-none text-primary-foreground">
-                  <Flag
-                    className="size-3.5 shrink-0 fill-current"
-                    aria-hidden="true"
-                  />
-                  <strong className="whitespace-nowrap text-[10px] leading-none">
-                    Inicio
-                  </strong>
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className={`${placeRemateMarkerBelow ? 'top-[7.25rem]' : 'top-0'} absolute z-20 h-9 w-[90px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`}
-                style={{ left: auctionFlagPosition.flagLeft }}
-                onPointerDown={(event) => startTimelineDrag('linked', event)}
-                onPointerMove={moveTimelineDrag}
-                onPointerUp={stopTimelineDrag}
-                onPointerCancel={stopTimelineDrag}
-                onKeyDown={(event) => handleTimelineKeyDown('linked', event)}
-                aria-label={`Mover Remate y Fin de cuotas juntos. Mes de remate ${auctionMonth}, ${auctionPayments} cuotas de remate. Usa las flechas izquierda y derecha para ajustar.`}
-                title="Desliza para mover Remate y Fin de cuotas juntos"
-              >
-                <svg
-                  className="absolute inset-0 h-9 w-full overflow-visible text-amber-500 drop-shadow-sm"
-                  viewBox="0 0 90 36"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d={getMilestoneFlagPath(
-                      90,
-                      auctionFlagPosition.tailLeft,
-                      placeRemateMarkerBelow ? 'below' : 'above',
-                    )}
-                    fill="currentColor"
-                  />
-                </svg>
-                <span
-                  className={`${placeRemateMarkerBelow ? 'top-2' : 'top-0'} pointer-events-none absolute inset-x-0 flex h-7 w-full items-center justify-center gap-1.5 px-2 text-center leading-none text-white`}
-                >
-                  <CircleDollarSign
-                    className="size-3.5 shrink-0"
-                    aria-hidden="true"
-                  />
-                  <strong className="whitespace-nowrap text-[10px] leading-none">
-                    Remate
-                  </strong>
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className="absolute top-0 z-20 h-9 w-[108px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                style={{ left: endFlagPosition.flagLeft }}
-                onPointerDown={(event) => startTimelineDrag('end', event)}
-                onPointerMove={moveTimelineDrag}
-                onPointerUp={stopTimelineDrag}
-                onPointerCancel={stopTimelineDrag}
-                onKeyDown={(event) => handleTimelineKeyDown('end', event)}
-                aria-label={`Mover únicamente Fin de cuotas. ${auctionPayments} cuotas adelantadas. Usa las flechas izquierda y derecha para ajustar.`}
-                title="Desliza para mover únicamente Fin de cuotas"
-              >
-                <svg
-                  className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm"
-                  viewBox="0 0 108 36"
-                  preserveAspectRatio="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d={getMilestoneFlagPath(
-                      108,
-                      endFlagPosition.tailLeft,
-                      'above',
-                    )}
-                    fill="currentColor"
-                  />
-                </svg>
-                <span className="pointer-events-none absolute inset-x-0 top-0 flex h-7 w-full items-center justify-center gap-1.5 px-2 text-center leading-none text-primary-foreground">
-                  <Flag className="size-3.5 shrink-0" aria-hidden="true" />
-                  <strong className="whitespace-nowrap text-[10px] leading-none">
-                    Fin de cuotas
-                  </strong>
-                </span>
-              </button>
-
-              <div ref={planBarRef} className="relative">
-                <div className="flex h-20 w-full overflow-hidden rounded-xl border border-primary/20 bg-muted">
-                  {groupAdvance > 0 && (
-                    <span
-                      className="flex h-full min-w-0 items-center justify-center px-1 text-center text-slate-600"
-                      style={{
-                        width: `${(groupAdvance / planTimelineMonths) * 100}%`,
-                        backgroundColor: 'rgb(226 232 240)',
-                        backgroundImage:
-                          'radial-gradient(ellipse at 88% 118%, rgb(148 163 184 / 35%) 0 34%, transparent 35%), linear-gradient(145deg, rgb(248 250 252), rgb(226 232 240))',
-                      }}
-                      title={`Meses de Avance: ${groupAdvance}`}
-                    >
-                      <span className="min-w-0 leading-tight">
-                        <span className="block truncate text-[9px] font-semibold">
-                          {groupAdvance >= 6 ? 'Meses de Avance' : 'Avance'}
-                        </span>
-                        <strong className="block text-lg">
-                          {groupAdvance}
-                        </strong>
-                      </span>
-                    </span>
-                  )}
-                  <span
-                    className="flex h-full min-w-0 items-center justify-center px-0.5 text-center text-white"
-                    style={{
-                      width: `${(paidPayments / planTimelineMonths) * 100}%`,
-                      backgroundColor: 'rgb(22 163 74)',
-                      backgroundImage:
-                        'radial-gradient(ellipse at 25% 118%, rgb(132 204 22 / 85%) 0 34%, transparent 35%), linear-gradient(145deg, rgb(74 222 128) 0%, rgb(22 163 74) 45%, rgb(21 128 61) 100%)',
-                    }}
-                    title={`Pagadas: ${paidPayments}. Periodo con sorteo mensual`}
-                  >
-                    <span className="min-w-0 leading-tight">
-                      <span className="block truncate text-[8px] font-semibold">
-                        Pagadas
-                      </span>
-                      <strong className="block text-lg">{paidPayments}</strong>
-                    </span>
-                  </span>
-                  <span
-                    className="flex h-full min-w-0 items-center justify-center border-l-2 border-orange-400 px-1 text-center text-white"
-                    style={{
-                      width: `${(remainingPayments / planTimelineMonths) * 100}%`,
-                      backgroundColor: 'rgb(29 78 216)',
-                      backgroundImage:
-                        'radial-gradient(ellipse at 92% 118%, rgb(14 165 233 / 90%) 0 36%, transparent 37%), linear-gradient(145deg, rgb(14 165 233) 0%, rgb(37 99 235) 48%, rgb(30 64 175) 100%)',
-                    }}
-                    title={`Restantes: ${remainingPayments}`}
-                  >
-                    <span className="min-w-0 leading-tight">
-                      <span className="block truncate text-[9px] font-semibold">
-                        Restantes
-                      </span>
-                      <strong className="block text-lg">
-                        {remainingPayments}
-                      </strong>
-                    </span>
-                  </span>
-                  <span
-                    className="flex h-full min-w-0 items-center justify-center border-l-2 border-primary/60 px-1 text-center text-slate-500"
-                    style={{
-                      width: `${(advancedPayments / planTimelineMonths) * 100}%`,
-                      backgroundColor: 'rgb(248 250 252 / 88%)',
-                      backgroundImage:
-                        'repeating-linear-gradient(135deg, rgb(148 163 184 / 24%) 0, rgb(148 163 184 / 24%) 1px, transparent 1px, transparent 7px)',
-                    }}
-                    title={`Adelantadas y abonadas: ${advancedPayments}`}
-                  >
-                    <span className="min-w-0 leading-tight opacity-70">
-                      <span className="flex items-center justify-center gap-1 truncate text-[8px] font-semibold">
-                        <CalendarCheck2
-                          className="size-3 shrink-0"
-                          aria-hidden="true"
-                        />
-                        Adelantadas
-                      </span>
-                      <strong className="block text-lg">
-                        {advancedPayments}
-                      </strong>
-                    </span>
-                  </span>
-                </div>
-
-                <span
-                  className={`${groupProgress === MIN_SIMULATOR_VALUE ? 'rounded-l-xl' : ''} pointer-events-none absolute inset-y-0 z-20 border-2 border-cyan-300`}
-                  style={{
-                    left: `calc(${startMarkerPercent}% - 1px)`,
-                    width: `calc(${endMarkerPercent - startMarkerPercent}% + 2px)`,
-                    boxShadow:
-                      'inset 0 0 0 1px rgb(255 255 255 / 70%), 0 0 10px rgb(34 211 238 / 55%)',
-                  }}
-                  title="Plazo de financiamiento: cuotas pagadas y cuotas restantes"
-                  aria-hidden="true"
+            <div className="flex flex-col gap-3 bg-transparent lg:self-start">
+              <div className="order-1 grid gap-0 bg-transparent lg:grid-cols-2">
+                <AuctionMonthSection
+                  auctionMonth={auctionMonth}
+                  onMonthChange={updateAuctionMonth}
                 />
 
-                <span
-                  className="absolute top-1/2 z-30 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-md bg-white/95 text-primary shadow-md ring-1 ring-sky-200"
-                  style={{
-                    left: `clamp(16px, ${auctionMarkerPercent}%, calc(100% - 16px))`,
-                  }}
-                  aria-label="Vehículo adjudicado en el remate"
-                >
-                  <Car className="size-6 stroke-[2.5]" aria-hidden="true" />
-                </span>
+                <AuctionPaymentsSection
+                  auctionPayments={auctionPayments}
+                  onPaymentsChange={updateAuctionPayments}
+                />
+
+                <AuctionCapitalSection
+                  auctionPayments={auctionPayments}
+                  auctionAmountUsd={formatUsd(auctionAmount)}
+                  auctionAmountPen={formatPen(toPen(auctionAmount))}
+                  optionAPaymentUsd={formatUsd(monthlyPayment)}
+                />
               </div>
-              <figcaption
-                className={`${placeRemateMarkerBelow ? 'mt-10' : 'mt-1.5'} flex min-w-0 justify-end text-[10px]`}
+
+              <section
+                className="order-3 rounded-3xl border border-primary/15 bg-card p-3.5 shadow-sm min-[420px]:p-4 lg:order-2"
+                aria-labelledby="planTitle"
               >
-                <span className="whitespace-nowrap">
-                  <strong className="text-primary">Mes {auctionMonth}</strong>
-                  <span className="text-muted-foreground">
-                    {' '}
-                    · Adjudicación por remate
+                <div className="mb-3 flex items-center gap-2.5">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">
+                    5
                   </span>
-                </span>
-              </figcaption>
-            </figure>
-          </section>
+                  <h2
+                    id="planTitle"
+                    className="text-xl font-extrabold tracking-tight"
+                  >
+                    Plan · {TOTAL_TERM_MONTHS} meses
+                  </h2>
+                </div>
+                <figure
+                  ref={planFigureRef}
+                  className="relative pt-9 lg:pt-[45px]"
+                  aria-label={`${groupAdvance} meses de avance, ${paidPayments} cuotas pagadas con sorteo mensual, ${advancedPayments} adelantadas y ${remainingPayments} restantes. Adjudicación por remate en el mes ${auctionMonth}`}
+                >
+                  <button
+                    type="button"
+                    className="absolute top-0 z-20 h-9 w-[82px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:h-[45px] lg:w-[140px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    style={{ left: startFlagPosition.flagLeft }}
+                    onPointerDown={(event) => startTimelineDrag('start', event)}
+                    onPointerMove={moveTimelineDrag}
+                    onPointerUp={stopTimelineDrag}
+                    onPointerCancel={stopTimelineDrag}
+                    onKeyDown={(event) => handleTimelineKeyDown('start', event)}
+                    aria-label={`Mover Inicio del plan. Avance de Grupo ${groupProgress}. Usa las flechas izquierda y derecha para ajustar.`}
+                    title="Desliza para ajustar el Avance de Grupo"
+                  >
+                    <svg
+                      className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm lg:h-[45px]"
+                      viewBox={`0 0 ${timelineFlagWidths.start} 36`}
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d={getMilestoneFlagPath(
+                          timelineFlagWidths.start,
+                          startFlagPosition.tailLeft,
+                          'above',
+                        )}
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span className="pointer-events-none absolute inset-x-0 top-0 flex h-7 w-full items-center justify-center gap-0.5 px-1 text-center leading-none text-primary-foreground lg:h-[35px] lg:gap-2 lg:px-3">
+                      <Flag
+                        className="size-2.5 shrink-0 fill-current lg:size-[18px]"
+                        aria-hidden="true"
+                      />
+                      <strong className="whitespace-nowrap text-[9px] leading-none lg:text-sm">
+                        Inicio del plan
+                      </strong>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${placeRemateMarkerBelow ? 'top-[8.25rem] lg:top-[8.8125rem]' : 'top-0'} absolute z-20 h-9 w-[90px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:h-[45px] lg:w-[140px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`}
+                    style={{ left: auctionFlagPosition.flagLeft }}
+                    onPointerDown={(event) =>
+                      startTimelineDrag('linked', event)
+                    }
+                    onPointerMove={moveTimelineDrag}
+                    onPointerUp={stopTimelineDrag}
+                    onPointerCancel={stopTimelineDrag}
+                    onKeyDown={(event) =>
+                      handleTimelineKeyDown('linked', event)
+                    }
+                    aria-label={`Mover Adjudicación y Última cuota juntos. Mes de remate ${auctionMonth}, ${auctionPayments} cuotas de remate. Usa las flechas izquierda y derecha para ajustar.`}
+                    title="Desliza para mover Adjudicación y Última cuota juntos"
+                  >
+                    <svg
+                      className="absolute inset-0 h-9 w-full overflow-visible text-amber-500 drop-shadow-sm lg:h-[45px]"
+                      viewBox={`0 0 ${timelineFlagWidths.auction} 36`}
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d={getMilestoneFlagPath(
+                          timelineFlagWidths.auction,
+                          auctionFlagPosition.tailLeft,
+                          placeRemateMarkerBelow ? 'below' : 'above',
+                        )}
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span
+                      className={`${placeRemateMarkerBelow ? 'top-2 lg:top-2.5' : 'top-0'} pointer-events-none absolute inset-x-0 flex h-7 w-full items-center justify-center gap-0.5 px-1 text-center leading-none text-white lg:h-[35px] lg:gap-2 lg:px-3`}
+                    >
+                      <CircleDollarSign
+                        className="size-2.5 shrink-0 lg:size-[18px]"
+                        aria-hidden="true"
+                      />
+                      <strong className="whitespace-nowrap text-[9px] leading-none lg:text-sm">
+                        Adjudicación
+                      </strong>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="absolute top-0 z-20 h-9 w-[108px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:h-[45px] lg:w-[132px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    style={{ left: endFlagPosition.flagLeft }}
+                    onPointerDown={(event) => startTimelineDrag('end', event)}
+                    onPointerMove={moveTimelineDrag}
+                    onPointerUp={stopTimelineDrag}
+                    onPointerCancel={stopTimelineDrag}
+                    onKeyDown={(event) => handleTimelineKeyDown('end', event)}
+                    aria-label={`Mover únicamente Última cuota. ${auctionPayments} cuotas adelantadas. Usa las flechas izquierda y derecha para ajustar.`}
+                    title="Desliza para mover únicamente Última cuota"
+                  >
+                    <svg
+                      className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm lg:h-[45px]"
+                      viewBox={`0 0 ${timelineFlagWidths.end} 36`}
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d={getMilestoneFlagPath(
+                          timelineFlagWidths.end,
+                          endFlagPosition.tailLeft,
+                          'above',
+                        )}
+                        fill="currentColor"
+                      />
+                    </svg>
+                    <span className="pointer-events-none absolute inset-x-0 top-0 flex h-7 w-full items-center justify-center gap-0.5 px-1 text-center leading-none text-primary-foreground lg:h-[35px] lg:gap-2 lg:px-3">
+                      <Flag
+                        className="size-2.5 shrink-0 lg:size-[18px]"
+                        aria-hidden="true"
+                      />
+                      <strong className="whitespace-nowrap text-[9px] leading-none lg:text-sm">
+                        Última cuota
+                      </strong>
+                    </span>
+                  </button>
+
+                  <div ref={planBarRef} className="relative">
+                    <div className="flex h-24 w-full overflow-hidden rounded-xl border border-primary/20 bg-muted">
+                      {groupAdvance > 0 && (
+                        <span
+                          className="flex h-full min-w-0 items-center justify-center overflow-hidden px-1 text-center text-slate-600"
+                          style={{
+                            width: `${(groupAdvance / planTimelineMonths) * 100}%`,
+                            backgroundColor: 'rgb(226 232 240)',
+                            backgroundImage:
+                              'radial-gradient(ellipse at 88% 118%, rgb(148 163 184 / 35%) 0 34%, transparent 35%), linear-gradient(145deg, rgb(248 250 252), rgb(226 232 240))',
+                          }}
+                          title={`Meses de Avance: ${groupAdvance}`}
+                        >
+                          <span className="min-w-0 overflow-hidden leading-tight">
+                            <span className="block truncate text-[10px] font-bold min-[420px]:text-xs lg:text-sm">
+                              {groupAdvance >= 6 ? 'Meses de Avance' : 'Avance'}
+                            </span>
+                            <strong className="mt-1 block text-xl font-extrabold leading-none min-[420px]:text-2xl">
+                              {groupAdvance}
+                            </strong>
+                          </span>
+                        </span>
+                      )}
+                      <span
+                        className="flex h-full min-w-0 items-center justify-center overflow-hidden px-0.5 text-center text-white"
+                        style={{
+                          width: `${(paidPayments / planTimelineMonths) * 100}%`,
+                          backgroundColor: 'rgb(22 163 74)',
+                          backgroundImage:
+                            'radial-gradient(ellipse at 25% 118%, rgb(132 204 22 / 85%) 0 34%, transparent 35%), linear-gradient(145deg, rgb(74 222 128) 0%, rgb(22 163 74) 45%, rgb(21 128 61) 100%)',
+                        }}
+                        title={`Pagadas: ${paidPayments}. Periodo con sorteo mensual`}
+                      >
+                        <span className="min-w-0 overflow-hidden leading-tight">
+                          <span className="block truncate text-[10px] font-bold min-[420px]:text-xs lg:text-sm">
+                            Pagadas
+                          </span>
+                          <strong className="mt-1 block text-xl font-extrabold leading-none min-[420px]:text-2xl">
+                            {paidPayments}
+                          </strong>
+                        </span>
+                      </span>
+                      <span
+                        className="flex h-full min-w-0 items-center justify-center overflow-hidden border-l-2 border-orange-400 px-1 text-center text-white"
+                        style={{
+                          width: `${(remainingPayments / planTimelineMonths) * 100}%`,
+                          backgroundColor: 'rgb(29 78 216)',
+                          backgroundImage:
+                            'radial-gradient(ellipse at 92% 118%, rgb(14 165 233 / 90%) 0 36%, transparent 37%), linear-gradient(145deg, rgb(14 165 233) 0%, rgb(37 99 235) 48%, rgb(30 64 175) 100%)',
+                        }}
+                        title={`Restantes: ${remainingPayments}`}
+                      >
+                        <span className="min-w-0 overflow-hidden leading-tight">
+                          <span className="block truncate text-[10px] font-bold min-[420px]:text-xs lg:text-sm">
+                            Restantes
+                          </span>
+                          <strong className="mt-1 block text-xl font-extrabold leading-none min-[420px]:text-2xl">
+                            {remainingPayments}
+                          </strong>
+                        </span>
+                      </span>
+                      <span
+                        className="flex h-full min-w-0 items-center justify-center overflow-hidden border-l-2 border-primary/60 px-1 text-center text-slate-500"
+                        style={{
+                          width: `${(advancedPayments / planTimelineMonths) * 100}%`,
+                          backgroundColor: 'rgb(248 250 252 / 88%)',
+                          backgroundImage:
+                            'repeating-linear-gradient(135deg, rgb(148 163 184 / 24%) 0, rgb(148 163 184 / 24%) 1px, transparent 1px, transparent 7px)',
+                        }}
+                        title={`Adelantadas y abonadas: ${advancedPayments}`}
+                      >
+                        <span className="min-w-0 overflow-hidden leading-tight opacity-75">
+                          <span className="flex items-center justify-center gap-1 truncate text-[9px] font-bold min-[420px]:text-xs lg:text-sm">
+                            <CalendarCheck2
+                              className="size-3 shrink-0"
+                              aria-hidden="true"
+                            />
+                            Adelantadas
+                          </span>
+                          <strong className="mt-1 block text-xl font-extrabold leading-none min-[420px]:text-2xl">
+                            {advancedPayments}
+                          </strong>
+                        </span>
+                      </span>
+                    </div>
+
+                    <span
+                      className={`${groupProgress === MIN_SIMULATOR_VALUE ? 'rounded-l-xl' : ''} pointer-events-none absolute inset-y-0 z-20 border-2 border-cyan-300`}
+                      style={{
+                        left: `calc(${startMarkerPercent}% - 1px)`,
+                        width: `calc(${endMarkerPercent - startMarkerPercent}% + 2px)`,
+                        boxShadow:
+                          'inset 0 0 0 1px rgb(255 255 255 / 70%), 0 0 10px rgb(34 211 238 / 55%)',
+                      }}
+                      title="Plazo de financiamiento: cuotas pagadas y cuotas restantes"
+                      aria-hidden="true"
+                    />
+
+                    <span
+                      className="pointer-events-none absolute top-1/2 z-30 flex h-12 w-[82px] -translate-x-1/2 -translate-y-1/2 items-center justify-center lg:h-[72px] lg:w-[132px]"
+                      style={{ left: `${auctionMarkerPercent}%` }}
+                      aria-label="Vehículo adjudicado en el remate"
+                    >
+                      <span
+                        className="absolute inset-[8%] -z-10 rounded-[50%] bg-cyan-100/80 blur-md lg:inset-[5%] lg:blur-lg"
+                        aria-hidden="true"
+                      />
+                      <Image
+                        src="/assets/remate-car-photorealistic.png"
+                        alt=""
+                        width={112}
+                        height={57}
+                        className="h-full w-full object-contain"
+                        style={{
+                          filter:
+                            'drop-shadow(0 0 1px rgb(255 255 255)) drop-shadow(0 0 5px rgb(125 211 252 / 90%)) drop-shadow(0 6px 6px rgb(15 23 42 / 35%))',
+                        }}
+                      />
+                    </span>
+                  </div>
+                  <figcaption
+                    className={`${placeRemateMarkerBelow ? 'mt-10' : 'mt-2'} flex min-w-0 justify-end text-xs font-medium min-[420px]:text-sm`}
+                  >
+                    <span className="whitespace-nowrap rounded-full bg-sky-50 px-3 py-1.5">
+                      <strong className="text-primary">
+                        Mes {auctionMonth}
+                      </strong>
+                      <span className="text-muted-foreground">
+                        {' '}
+                        · Adjudicación por remate
+                      </span>
+                    </span>
+                  </figcaption>
+                </figure>
+              </section>
+
+              <div className="order-2 lg:order-3">
+                <AuctionOptionsSection
+                  optionARemainingPayments={proratedRemainingPayments}
+                  optionAPaymentUsd={formatUsd(monthlyPayment)}
+                  optionAPaymentPen={formatPen(toPen(monthlyPayment))}
+                  optionBRemainingPayments={prorationRemainingPayments}
+                  optionBPaymentUsd={formatUsd(proratedPayment)}
+                  optionBPaymentPen={formatPen(toPen(proratedPayment))}
+                />
+              </div>
+            </div>
+          </div>
 
           {savedScenarios.length > 0 && (
             <section
