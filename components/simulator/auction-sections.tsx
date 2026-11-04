@@ -35,8 +35,16 @@ type AuctionMonthSectionProps = {
 type AuctionPaymentsSectionProps = {
   auctionPayments: number;
   onPaymentsChange: (payments: number) => void;
+};
+
+type AuctionCapitalSectionProps = {
+  auctionPayments: number;
   auctionAmountUsd: string;
   auctionAmountPen: string;
+  optionAPaymentUsd: string;
+};
+
+type AuctionOptionsSectionProps = {
   optionARemainingPayments: number;
   optionAPaymentUsd: string;
   optionAPaymentPen: string;
@@ -55,7 +63,7 @@ export function AuctionMonthSection({
       aria-labelledby="auctionMonthTitle"
     >
       <div className="h-full rounded-t-3xl border-x border-t border-primary/15 bg-card p-3 min-[420px]:p-4 lg:rounded-tr-none lg:border-r-0">
-        <div className="mb-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
           <div className="flex min-w-0 items-center gap-1">
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
               3
@@ -63,11 +71,11 @@ export function AuctionMonthSection({
             <div className="grid min-w-0 content-start gap-0.5 pt-px">
               <h2
                 id="auctionMonthTitle"
-                className="whitespace-nowrap text-xs font-bold leading-tight tracking-tight min-[360px]:text-sm lg:text-base"
+                className="whitespace-nowrap text-sm font-extrabold leading-tight tracking-tight min-[360px]:text-base"
               >
                 Mes de remate
               </h2>
-              <p className="text-[11px] leading-tight text-muted-foreground">
+              <p className="text-xs font-medium leading-tight text-muted-foreground">
                 Decide cuándo avanzar.
               </p>
             </div>
@@ -85,7 +93,7 @@ export function AuctionMonthSection({
                 name="auctionMonth"
                 value={auctionMonth}
                 onChange={(event) => onMonthChange(Number(event.target.value))}
-                className="h-9 w-[5.5rem] appearance-none rounded-xl border border-primary/15 bg-primary/[0.08] pl-2.5 pr-7 text-xs font-bold text-primary outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/20"
+                className="h-10 w-[5.75rem] appearance-none rounded-xl border border-primary/15 bg-primary/[0.08] pl-2.5 pr-7 text-sm font-extrabold text-primary outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/20"
               >
                 {AUCTION_MONTH_OPTIONS.map((month) => (
                   <option key={month} value={month}>
@@ -107,7 +115,7 @@ export function AuctionMonthSection({
               type="button"
               size="sm"
               variant={auctionMonth === month ? 'default' : 'outline'}
-              className={`h-8 min-w-0 rounded-lg px-1 text-xs font-semibold shadow-none transition-colors duration-150 active:translate-y-0 lg:h-9 lg:text-sm ${
+              className={`h-9 min-w-0 rounded-xl px-1 text-sm font-bold shadow-none transition-colors duration-150 active:translate-y-0 ${
                 auctionMonth === month
                   ? ''
                   : 'border-border/80 bg-background/80 hover:bg-muted'
@@ -133,238 +141,254 @@ export function AuctionMonthSection({
 export function AuctionPaymentsSection({
   auctionPayments,
   onPaymentsChange,
+}: AuctionPaymentsSectionProps) {
+  return (
+    <section
+      className="bg-transparent lg:col-span-1"
+      aria-labelledby="auctionPaymentsTitle"
+    >
+      <div className="h-full border-x border-t border-primary/15 bg-card p-3 min-[420px]:p-4 lg:rounded-tr-3xl">
+        <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <div className="flex min-w-0 items-center gap-1">
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+              4
+            </span>
+            <div className="grid min-w-0 content-start gap-0.5 pt-px">
+              <h2
+                id="auctionPaymentsTitle"
+                className="whitespace-nowrap text-sm font-extrabold leading-tight tracking-tight min-[360px]:text-base"
+              >
+                Cuotas de remate
+              </h2>
+              <p className="text-xs font-medium leading-tight text-muted-foreground">
+                Tú defines el monto
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 justify-self-end">
+            <span className="flex size-8 items-center justify-center rounded-full bg-primary/[0.07] text-primary">
+              <CircleDollarSign className="size-4.5" aria-hidden="true" />
+            </span>
+            <label className="sr-only" htmlFor="auctionPayments">
+              Seleccionar cuotas de remate
+            </label>
+            <span className="relative block">
+              <select
+                id="auctionPayments"
+                name="auctionPayments"
+                value={auctionPayments}
+                onChange={(event) =>
+                  onPaymentsChange(Number(event.target.value))
+                }
+                className="h-10 w-28 appearance-none rounded-xl border border-primary/15 bg-primary/[0.08] pl-2.5 pr-7 text-sm font-extrabold text-primary outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/20"
+              >
+                {AUCTION_PAYMENT_OPTIONS.map((payments) => (
+                  <option key={payments} value={payments}>
+                    {payments} Cuotas
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-primary"
+                aria-hidden="true"
+              />
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-6 gap-1">
+          {AUCTION_PAYMENT_PRESETS.map((payments) => (
+            <Button
+              key={payments}
+              type="button"
+              size="sm"
+              variant={auctionPayments === payments ? 'default' : 'outline'}
+              className={`h-9 min-w-0 rounded-xl px-1 text-sm font-bold shadow-none transition-colors duration-150 active:translate-y-0 ${
+                auctionPayments === payments
+                  ? ''
+                  : 'border-border/80 bg-background/80 hover:bg-muted'
+              }`}
+              onClick={() => onPaymentsChange(payments)}
+              aria-pressed={auctionPayments === payments}
+            >
+              {payments}
+            </Button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function AuctionCapitalSection({
+  auctionPayments,
   auctionAmountUsd,
   auctionAmountPen,
+  optionAPaymentUsd,
+}: AuctionCapitalSectionProps) {
+  return (
+    <section
+      className="bg-transparent lg:col-span-2"
+      aria-labelledby="auctionCapitalTitle"
+    >
+      <div className="rounded-b-3xl border border-cyan-300 bg-gradient-to-br from-sky-500 via-primary to-blue-800 p-3.5 text-white shadow-md min-[420px]:p-4">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2.5 max-[389px]:gap-x-1.5 lg:grid-cols-[auto_auto_auto] lg:justify-center lg:gap-x-8">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-white/15 text-white max-[389px]:size-9">
+            <Banknote className="size-5" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 lg:text-center">
+            <h2
+              id="auctionCapitalTitle"
+              className="whitespace-nowrap text-lg font-extrabold tracking-tight text-white max-[389px]:text-[17px] min-[420px]:text-xl"
+            >
+              Capital de Remate
+            </h2>
+            <span className="mt-1 block whitespace-nowrap text-left text-sm font-medium not-italic leading-none text-white/90 max-[389px]:text-xs min-[420px]:text-[15px] lg:text-center">
+              {auctionPayments} cuotas × US${' '}
+              {optionAPaymentUsd.replace(/^\$/, '')}
+            </span>
+          </span>
+          <span className="min-w-0 text-right lg:text-center">
+            <strong className="block max-w-full whitespace-nowrap text-xl font-extrabold leading-none tracking-tight text-white tabular-nums max-[389px]:text-lg min-[420px]:text-2xl">
+              {auctionAmountUsd}
+            </strong>
+            <span className="mt-1 block max-w-full whitespace-nowrap text-sm font-medium leading-none text-white/90 tabular-nums max-[389px]:text-xs">
+              {auctionAmountPen}
+            </span>
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function AuctionOptionsSection({
   optionARemainingPayments,
   optionAPaymentUsd,
   optionAPaymentPen,
   optionBRemainingPayments,
   optionBPaymentUsd,
   optionBPaymentPen,
-}: AuctionPaymentsSectionProps) {
+}: AuctionOptionsSectionProps) {
   return (
-    <>
-      <section
-        className="bg-transparent lg:col-span-1"
-        aria-labelledby="auctionPaymentsTitle"
-      >
-        <div className="h-full border-x border-t border-primary/15 bg-card p-3 min-[420px]:p-4 lg:rounded-tr-3xl">
-          <div className="mb-2 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-            <div className="flex min-w-0 items-center gap-1">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                4
-              </span>
-              <div className="grid min-w-0 content-start gap-0.5 pt-px">
-                <h2
-                  id="auctionPaymentsTitle"
-                  className="whitespace-nowrap text-xs font-bold leading-tight tracking-tight min-[360px]:text-sm lg:text-base"
+    <section aria-labelledby="auctionOptionsTitle">
+      <div className="space-y-3 rounded-3xl border border-primary/15 bg-card p-3.5 shadow-sm min-[420px]:p-4">
+        <div>
+          <div className="border-b border-primary/15 px-1 pb-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3
+                  id="auctionOptionsTitle"
+                  className="max-w-[28rem] text-xl font-extrabold leading-tight tracking-tight text-primary min-[420px]:text-2xl lg:max-w-none lg:whitespace-nowrap"
                 >
-                  Cuotas de remate
-                </h2>
-                <p className="text-[11px] leading-tight text-muted-foreground">
-                  Tú defines el monto
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 justify-self-end">
-              <span className="flex size-8 items-center justify-center rounded-full bg-primary/[0.07] text-primary">
-                <CircleDollarSign className="size-4.5" aria-hidden="true" />
-              </span>
-              <label className="sr-only" htmlFor="auctionPayments">
-                Seleccionar cuotas de remate
-              </label>
-              <span className="relative block">
-                <select
-                  id="auctionPayments"
-                  name="auctionPayments"
-                  value={auctionPayments}
-                  onChange={(event) =>
-                    onPaymentsChange(Number(event.target.value))
-                  }
-                  className="h-9 w-24 appearance-none rounded-xl border border-primary/15 bg-primary/[0.08] pl-2 pr-6 text-xs font-bold text-primary outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/20"
-                >
-                  {AUCTION_PAYMENT_OPTIONS.map((payments) => (
-                    <option key={payments} value={payments}>
-                      {payments} Cuotas
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-primary"
+                  Adapta tus últimas cuotas a tu objetivo
+                </h3>
+                <span
+                  className="mt-1 block h-0.5 w-36 rounded-full bg-amber-400"
                   aria-hidden="true"
                 />
-              </span>
-            </div>
-          </div>
-          <div className="grid grid-cols-6 gap-1">
-            {AUCTION_PAYMENT_PRESETS.map((payments) => (
-              <Button
-                key={payments}
-                type="button"
-                size="sm"
-                variant={auctionPayments === payments ? 'default' : 'outline'}
-                className={`h-8 min-w-0 rounded-lg px-1 text-xs font-semibold shadow-none transition-colors duration-150 active:translate-y-0 lg:h-9 lg:text-sm ${
-                  auctionPayments === payments
-                    ? ''
-                    : 'border-border/80 bg-background/80 hover:bg-muted'
-                }`}
-                onClick={() => onPaymentsChange(payments)}
-                aria-pressed={auctionPayments === payments}
-              >
-                {payments}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="bg-transparent lg:col-span-2"
-        aria-labelledby="auctionCapitalTitle"
-      >
-        <div className="rounded-b-3xl border border-cyan-300 bg-gradient-to-br from-sky-500 via-primary to-blue-800 p-3 text-white shadow-md min-[420px]:p-4">
-          <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2">
-            <span className="flex size-9 items-center justify-center rounded-full bg-white/15 text-white">
-              <Banknote className="size-4.5" aria-hidden="true" />
-            </span>
-            <span className="min-w-0">
-              <h2
-                id="auctionCapitalTitle"
-                className="whitespace-nowrap text-base font-bold tracking-tight text-white lg:text-lg"
-              >
-                Capital de Remate
-              </h2>
-              <span className="mt-1 block whitespace-nowrap text-left text-sm font-medium not-italic leading-none text-white/90">
-                {auctionPayments} cuotas × US${' '}
-                {optionAPaymentUsd.replace(/^\$/, '')}
-              </span>
-            </span>
-            <span className="min-w-0 text-right">
-              <strong className="block max-w-full whitespace-nowrap text-base font-bold tracking-tight text-white tabular-nums min-[360px]:text-lg min-[640px]:text-xl">
-                {auctionAmountUsd}
-              </strong>
-              <span className="mt-0.5 block max-w-full whitespace-nowrap text-xs font-medium text-white/85 tabular-nums">
-                {auctionAmountPen}
-              </span>
-            </span>
-          </div>
-        </div>
-        <div className="mt-3 space-y-3 rounded-3xl border border-primary/15 bg-card p-3 shadow-sm">
-          <div>
-            <div className="border-b border-primary/15 px-1 pb-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="text-lg font-extrabold leading-tight tracking-tight text-primary">
-                    Adapta tus últimas cuotas a tu objetivo
-                  </h3>
-                  <span
-                    className="mt-1 block h-0.5 w-36 rounded-full bg-amber-400"
-                    aria-hidden="true"
-                  />
-                </div>
-                <span className="flex size-10 shrink-0 -rotate-6 items-center justify-center rounded-full bg-amber-100 text-primary">
-                  <Flag className="size-6 fill-current" aria-hidden="true" />
-                </span>
               </div>
+              <span className="flex size-11 shrink-0 -rotate-6 items-center justify-center rounded-full bg-amber-100 text-primary">
+                <Flag className="size-6 fill-current" aria-hidden="true" />
+              </span>
             </div>
           </div>
-          <dl className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-            <div className="rounded-3xl border border-sky-200 bg-card p-3 shadow-sm">
-              <dt className="grid min-w-0 grid-cols-2 items-center gap-x-2 border-b border-primary/15 pb-2">
-                <span className="flex min-w-0 items-center gap-2">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-sky-100 text-blue-600">
-                    <TrendingUp className="size-5" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <strong className="block truncate text-lg font-bold text-primary">
-                      Opción A
-                    </strong>
-                    <span className="block truncate text-sm font-medium text-foreground/80">
-                      Mantener cuota
-                    </span>
-                  </span>
-                </span>
-                <span className="inline-flex w-fit max-w-full min-w-0 items-center justify-center justify-self-center gap-1.5 rounded-2xl bg-sky-100 px-2 py-1.5 text-center text-[9px] font-semibold leading-tight text-blue-600">
-                  <Star
-                    className="size-3 shrink-0 fill-current"
-                    aria-hidden="true"
-                  />
-                  <span className="min-w-0">Termina antes</span>
-                </span>
-              </dt>
-              <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-2 text-center">
-                <span className="px-2">
-                  <span className="block text-xs text-muted-foreground">
-                    Cuotas restantes
-                  </span>
-                  <strong className="mt-1 block text-3xl font-bold leading-none tracking-tight">
-                    {optionARemainingPayments}
-                  </strong>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    cuotas
-                  </span>
-                </span>
-                <span className="min-w-0 px-2">
-                  <span className="block text-xs text-muted-foreground">
-                    Cuota mensual
-                  </span>
-                  <strong className="mt-1 block truncate text-xl font-bold text-primary">
-                    {optionAPaymentUsd}
-                  </strong>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    {optionAPaymentPen}
-                  </span>
-                </span>
-              </dd>
-            </div>
-            <div className="rounded-3xl border border-emerald-200 bg-card p-3 shadow-sm">
-              <dt className="grid min-w-0 grid-cols-2 items-center gap-x-2 border-b border-primary/15 pb-2">
-                <span className="flex min-w-0 items-center gap-2">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                    <TrendingDown className="size-5" aria-hidden="true" />
-                  </span>
-                  <span className="min-w-0">
-                    <strong className="block truncate text-lg font-bold text-primary">
-                      Opción B
-                    </strong>
-                    <span className="block truncate text-sm font-medium text-foreground/80">
-                      Reducir cuota
-                    </span>
-                  </span>
-                </span>
-                <span className="inline-flex w-fit max-w-full min-w-0 items-center justify-center justify-self-center gap-1.5 rounded-2xl bg-emerald-100/80 px-2 py-1.5 text-center text-[9px] font-semibold leading-tight text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-                  <Leaf className="size-3 shrink-0" aria-hidden="true" />
-                  <span className="min-w-0">Cuota más cómoda</span>
-                </span>
-              </dt>
-              <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-2 text-center">
-                <span className="px-2">
-                  <span className="block text-xs text-muted-foreground">
-                    Cuotas restantes
-                  </span>
-                  <strong className="mt-1 block text-3xl font-bold leading-none tracking-tight">
-                    {optionBRemainingPayments}
-                  </strong>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    cuotas
-                  </span>
-                </span>
-                <span className="min-w-0 px-2">
-                  <span className="block text-xs text-muted-foreground">
-                    Cuota mensual
-                  </span>
-                  <strong className="mt-1 block truncate text-xl font-bold text-primary">
-                    {optionBPaymentUsd}
-                  </strong>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    {optionBPaymentPen}
-                  </span>
-                </span>
-              </dd>
-            </div>
-          </dl>
         </div>
-      </section>
-    </>
+        <dl className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+          <div className="rounded-3xl border border-sky-200 bg-card p-3.5 shadow-sm min-[420px]:p-4">
+            <dt className="flex min-w-0 items-center gap-2 border-b border-primary/15 pb-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-blue-600">
+                <TrendingUp className="size-5.5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex min-w-0 items-center gap-2 lg:gap-1 xl:gap-2">
+                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl lg:text-[19px] xl:text-xl">
+                    Opción A
+                  </strong>
+                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-sky-100 px-2 py-2 text-center text-[10px] font-bold leading-none text-blue-600 min-[360px]:text-[11px] lg:px-1.5 lg:text-[10px] xl:px-2 xl:text-[11px]">
+                    <Star
+                      className="size-3 shrink-0 fill-current"
+                      aria-hidden="true"
+                    />
+                    <span className="whitespace-nowrap">Termina antes</span>
+                  </span>
+                </span>
+                <span className="block whitespace-nowrap text-base font-medium text-foreground/80">
+                  Mantener cuota actual
+                </span>
+              </span>
+            </dt>
+            <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-3 text-center">
+              <span className="px-2">
+                <span className="block text-sm font-medium text-muted-foreground">
+                  Cuotas restantes
+                </span>
+                <strong className="mt-1.5 block text-4xl font-extrabold leading-none tracking-tight">
+                  {optionARemainingPayments}
+                </strong>
+                <span className="mt-1 block text-sm font-medium text-muted-foreground">
+                  cuotas
+                </span>
+              </span>
+              <span className="min-w-0 px-2">
+                <span className="block text-sm font-medium text-muted-foreground">
+                  Cuota mensual
+                </span>
+                <strong className="mt-1.5 block truncate text-2xl font-extrabold leading-none tracking-tight text-primary">
+                  {optionAPaymentUsd}
+                </strong>
+                <span className="mt-1.5 block truncate text-sm font-medium text-muted-foreground">
+                  {optionAPaymentPen}
+                </span>
+              </span>
+            </dd>
+          </div>
+          <div className="rounded-3xl border border-emerald-200 bg-card p-3.5 shadow-sm min-[420px]:p-4">
+            <dt className="flex min-w-0 items-center gap-2 border-b border-primary/15 pb-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+                <TrendingDown className="size-5.5" aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex min-w-0 items-center gap-2 lg:gap-1 xl:gap-2">
+                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl lg:text-[19px] xl:text-xl">
+                    Opción B
+                  </strong>
+                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-emerald-100/80 px-2 py-2 text-center text-[10px] font-bold leading-none text-emerald-700 min-[360px]:text-[11px] lg:px-1.5 lg:text-[10px] xl:px-2 xl:text-[11px] dark:bg-emerald-950/50 dark:text-emerald-300">
+                    <Leaf className="size-3 shrink-0" aria-hidden="true" />
+                    <span className="whitespace-nowrap">Cuota más cómoda</span>
+                  </span>
+                </span>
+                <span className="block whitespace-nowrap text-base font-medium text-foreground/80">
+                  Reducir cuota
+                </span>
+              </span>
+            </dt>
+            <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-3 text-center">
+              <span className="px-2">
+                <span className="block text-sm font-medium text-muted-foreground">
+                  Cuotas restantes
+                </span>
+                <strong className="mt-1.5 block text-4xl font-extrabold leading-none tracking-tight">
+                  {optionBRemainingPayments}
+                </strong>
+                <span className="mt-1 block text-sm font-medium text-muted-foreground">
+                  cuotas
+                </span>
+              </span>
+              <span className="min-w-0 px-2">
+                <span className="block text-sm font-medium text-muted-foreground">
+                  Cuota mensual
+                </span>
+                <strong className="mt-1.5 block truncate text-2xl font-extrabold leading-none tracking-tight text-primary">
+                  {optionBPaymentUsd}
+                </strong>
+                <span className="mt-1.5 block truncate text-sm font-medium text-muted-foreground">
+                  {optionBPaymentPen}
+                </span>
+              </span>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </section>
   );
 }
