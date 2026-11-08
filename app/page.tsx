@@ -5,19 +5,18 @@ import {
   Fragment,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
+  useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
 import {
-  CalendarCheck2,
   CalendarDays,
-  CircleDollarSign,
   Clock3,
   Coins,
   CreditCard,
   ReceiptText,
-  Flag,
   Trash2,
   WalletCards,
 } from 'lucide-react';
@@ -72,6 +71,8 @@ type ComparisonRow = {
 };
 
 type TimelineDragKind = 'start' | 'linked' | 'end';
+type TimelineSegmentKey = 'advance' | 'paid' | 'remaining' | 'advanced';
+type TimelineSegmentDisplay = 'full' | 'number' | 'hidden';
 
 type TimelineDragSnapshot = {
   kind: TimelineDragKind;
@@ -89,73 +90,100 @@ const TIMELINE_AUCTION_PAYMENTS_MAX = 35;
 const clampTimelineValue = (value: number, minimum: number, maximum: number) =>
   Math.min(Math.max(value, minimum), maximum);
 
-const getMilestoneFlagPosition = (
-  markerPercent: number,
-  flagWidth: number,
-  containerWidth: number,
-) => {
-  const measuredWidth = containerWidth || 320;
-  const halfFlagWidth = flagWidth / 2;
-  const markerX = (markerPercent / 100) * measuredWidth;
-  const centerX = Math.min(
-    Math.max(markerX, halfFlagWidth),
-    measuredWidth - halfFlagWidth,
+function TimelineSegmentLabel({
+  label,
+  value,
+  segment,
+  onDisplayChange,
+}: {
+  label: string;
+  value: number;
+  segment: TimelineSegmentKey;
+  onDisplayChange: (
+    segment: TimelineSegmentKey,
+    display: TimelineSegmentDisplay,
+  ) => void;
+}) {
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const fullLabelRef = useRef<HTMLSpanElement>(null);
+  const numberRef = useRef<HTMLElement>(null);
+  const [display, setDisplay] = useState<TimelineSegmentDisplay>('hidden');
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const fullLabel = fullLabelRef.current;
+    const number = numberRef.current;
+    if (!container || !fullLabel || !number) return;
+
+    const measure = () => {
+      const availableWidth = container.getBoundingClientRect().width;
+      const fullLabelWidth = fullLabel.getBoundingClientRect().width;
+      const numberWidth = number.getBoundingClientRect().width;
+      const nextDisplay =
+        availableWidth >= fullLabelWidth
+          ? 'full'
+          : availableWidth >= numberWidth
+            ? 'number'
+            : 'hidden';
+
+      setDisplay((current) =>
+        current === nextDisplay ? current : nextDisplay,
+      );
+      onDisplayChange(segment, nextDisplay);
+    };
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(container);
+    observer.observe(fullLabel);
+    observer.observe(number);
+    measure();
+
+    return () => observer.disconnect();
+  }, [label, onDisplayChange, segment, value]);
+
+  return (
+    <span
+      ref={containerRef}
+      className="relative flex h-full w-full min-w-0 items-center justify-center overflow-hidden"
+    >
+      <span
+        ref={fullLabelRef}
+        className="invisible absolute inline-flex w-max flex-col items-center justify-center whitespace-nowrap px-1.5"
+        aria-hidden="true"
+      >
+        <span className="text-[9px] font-bold leading-none min-[420px]:text-[10px] lg:text-xs">
+          {label}
+        </span>
+        <strong className="text-xl font-extrabold leading-none min-[420px]:text-2xl">
+          {value}
+        </strong>
+      </span>
+      <strong
+        ref={numberRef}
+        className="invisible absolute w-max whitespace-nowrap px-1 text-xl font-extrabold leading-none min-[420px]:text-2xl"
+        aria-hidden="true"
+      >
+        {value}
+      </strong>
+
+      {display === 'full' && (
+        <span className="inline-flex max-w-full flex-col items-center justify-center whitespace-nowrap px-1.5">
+          <span className="text-[9px] font-bold leading-none min-[420px]:text-[10px] lg:text-xs">
+            {label}
+          </span>
+          <strong className="text-xl font-extrabold leading-none min-[420px]:text-2xl">
+            {value}
+          </strong>
+        </span>
+      )}
+      {display === 'number' && (
+        <strong className="whitespace-nowrap px-1 text-xl font-extrabold leading-none min-[420px]:text-2xl">
+          {value}
+        </strong>
+      )}
+    </span>
   );
-
-  return {
-    flagLeft: centerX,
-    tailLeft: markerX - (centerX - halfFlagWidth),
-  };
-};
-
-const getMilestoneFlagPath = (
-  flagWidth: number,
-  tailLeft: number,
-  placement: 'above' | 'below',
-) => {
-  const radius = 8;
-  const halfTailWidth = 6;
-  const tailBaseCenter = Math.min(
-    Math.max(tailLeft, radius + halfTailWidth),
-    flagWidth - radius - halfTailWidth,
-  );
-  const tailStart = tailBaseCenter - halfTailWidth;
-  const tailEnd = tailBaseCenter + halfTailWidth;
-
-  if (placement === 'below') {
-    return [
-      `M ${radius} 8`,
-      `H ${tailStart}`,
-      `L ${tailLeft} 0`,
-      `L ${tailEnd} 8`,
-      `H ${flagWidth - radius}`,
-      `Q ${flagWidth} 8 ${flagWidth} ${8 + radius}`,
-      `V ${36 - radius}`,
-      `Q ${flagWidth} 36 ${flagWidth - radius} 36`,
-      `H ${radius}`,
-      `Q 0 36 0 ${36 - radius}`,
-      `V ${8 + radius}`,
-      `Q 0 8 ${radius} 8`,
-      'Z',
-    ].join(' ');
-  }
-
-  return [
-    `M ${radius} 0`,
-    `H ${flagWidth - radius}`,
-    `Q ${flagWidth} 0 ${flagWidth} ${radius}`,
-    `V ${28 - radius}`,
-    `Q ${flagWidth} 28 ${flagWidth - radius} 28`,
-    `H ${tailEnd}`,
-    `L ${tailLeft} 36`,
-    `L ${tailStart} 28`,
-    `H ${radius}`,
-    `Q 0 28 0 ${28 - radius}`,
-    `V ${radius}`,
-    `Q 0 0 ${radius} 0`,
-    'Z',
-  ].join(' ');
-};
+}
 
 export default function Home() {
   const [certificateId, setCertificateId] = useState(CERTIFICATES[0].id);
@@ -172,6 +200,25 @@ export default function Home() {
   const timelineDragRef = useRef<TimelineDragSnapshot | null>(null);
   const [planFigureWidth, setPlanFigureWidth] = useState(0);
   const [isDesktopTimeline, setIsDesktopTimeline] = useState(false);
+  const [timelineSegmentDisplays, setTimelineSegmentDisplays] = useState<
+    Record<TimelineSegmentKey, TimelineSegmentDisplay>
+  >({
+    advance: 'hidden',
+    paid: 'hidden',
+    remaining: 'hidden',
+    advanced: 'hidden',
+  });
+
+  const updateTimelineSegmentDisplay = useCallback(
+    (segment: TimelineSegmentKey, display: TimelineSegmentDisplay) => {
+      setTimelineSegmentDisplays((current) =>
+        current[segment] === display
+          ? current
+          : { ...current, [segment]: display },
+      );
+    },
+    [],
+  );
 
   useEffect(() => {
     const figure = planFigureRef.current;
@@ -225,28 +272,69 @@ export default function Home() {
   const endMarkerPercent =
     ((groupAdvance + paidPayments + remainingPayments) / planTimelineMonths) *
     100;
-  const placeRemateMarkerBelow =
-    auctionMarkerPercent - startMarkerPercent < 22 ||
-    endMarkerPercent - auctionMarkerPercent < 22;
-  const timelineFlagWidths = isDesktopTimeline
-    ? { start: 140, auction: 140, end: 132 }
-    : { start: 82, auction: 90, end: 108 };
-  const startFlagPosition = getMilestoneFlagPosition(
-    startMarkerPercent,
-    timelineFlagWidths.start,
-    planFigureWidth,
-  );
-  const auctionFlagPosition = getMilestoneFlagPosition(
-    auctionMarkerPercent,
-    timelineFlagWidths.auction,
-    planFigureWidth,
-  );
-  const endFlagPosition = getMilestoneFlagPosition(
-    endMarkerPercent,
-    timelineFlagWidths.end,
-    planFigureWidth,
-  );
+  const raceFlagWidth = isDesktopTimeline ? 72 : 60;
+  const auctionFlagWidth = isDesktopTimeline ? 210 : 170;
+  const timelineBarWidth = Math.max(planFigureWidth, 1);
+  const startFlagPoleOffset = raceFlagWidth * 0.12;
+  const endFlagPoleOffset = raceFlagWidth * 0.17;
+  const startFlagLeft =
+    (startMarkerPercent / 100) * timelineBarWidth - startFlagPoleOffset;
+  const auctionFlagLeft =
+    (auctionMarkerPercent / 100) * timelineBarWidth -
+    auctionFlagWidth * 0.16;
+  const endFlagLeft =
+    (endMarkerPercent / 100) * timelineBarWidth - endFlagPoleOffset;
   const auctionAmount = monthlyPayment * advancedPayments;
+  const timelineSummaryCards = [
+    {
+      key: 'advance' as const,
+      label: 'Avance',
+      value: groupAdvance,
+      className: 'border-slate-300 text-slate-600',
+      style: {
+        backgroundColor: 'rgb(226 232 240)',
+        backgroundImage:
+          'radial-gradient(ellipse at 88% 118%, rgb(148 163 184 / 35%) 0 34%, transparent 35%), linear-gradient(145deg, rgb(248 250 252), rgb(226 232 240))',
+      },
+      isCompact: timelineSegmentDisplays.advance !== 'full',
+    },
+    {
+      key: 'paid' as const,
+      label: 'Pagadas',
+      value: paidPayments,
+      className: 'border-emerald-300 text-white',
+      style: {
+        backgroundColor: 'rgb(22 163 74)',
+        backgroundImage:
+          'radial-gradient(ellipse at 25% 118%, rgb(132 204 22 / 85%) 0 34%, transparent 35%), linear-gradient(145deg, rgb(74 222 128) 0%, rgb(22 163 74) 45%, rgb(21 128 61) 100%)',
+      },
+      isCompact: timelineSegmentDisplays.paid !== 'full',
+    },
+    {
+      key: 'remaining' as const,
+      label: 'Restantes',
+      value: remainingPayments,
+      className: 'border-blue-300 text-white',
+      style: {
+        backgroundColor: 'rgb(29 78 216)',
+        backgroundImage:
+          'radial-gradient(ellipse at 92% 118%, rgb(14 165 233 / 90%) 0 36%, transparent 37%), linear-gradient(145deg, rgb(14 165 233) 0%, rgb(37 99 235) 48%, rgb(30 64 175) 100%)',
+      },
+      isCompact: timelineSegmentDisplays.remaining !== 'full',
+    },
+    {
+      key: 'advanced' as const,
+      label: 'Adelantadas',
+      value: advancedPayments,
+      className: 'border-primary/60 text-slate-500',
+      style: {
+        backgroundColor: 'rgb(248 250 252 / 88%)',
+        backgroundImage:
+          'repeating-linear-gradient(135deg, rgb(100 116 139 / 42%) 0, rgb(100 116 139 / 42%) 1.5px, transparent 1.5px, transparent 8px)',
+      },
+      isCompact: timelineSegmentDisplays.advanced !== 'full',
+    },
+  ];
   const {
     cuotasRestantes: proratedRemainingPayments,
     cuotasRestantesProrrateo: prorationRemainingPayments,
@@ -487,7 +575,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background px-3 py-3 sm:px-5 sm:py-4">
-      <div className="mx-auto w-full max-w-5xl lg:max-w-[76.8rem]">
+      <div className="mx-auto w-full max-w-5xl lg:max-w-[49rem]">
         <header className="mb-3 border-b pb-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
@@ -743,87 +831,99 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col gap-3 bg-transparent lg:self-start">
-              <div className="order-1 grid gap-0 bg-transparent lg:grid-cols-2">
-                <AuctionMonthSection
-                  auctionMonth={auctionMonth}
-                  onMonthChange={updateAuctionMonth}
-                />
+              <div className="order-1 overflow-hidden rounded-3xl border border-primary/15 bg-card shadow-sm">
+                <div className="grid gap-0">
+                  <AuctionMonthSection
+                    auctionMonth={auctionMonth}
+                    onMonthChange={updateAuctionMonth}
+                  />
 
-                <AuctionPaymentsSection
-                  auctionPayments={auctionPayments}
-                  onPaymentsChange={updateAuctionPayments}
-                />
+                  <AuctionPaymentsSection
+                    auctionPayments={auctionPayments}
+                    onPaymentsChange={updateAuctionPayments}
+                  />
 
-                <AuctionCapitalSection
-                  auctionPayments={auctionPayments}
-                  auctionAmountUsd={formatUsd(auctionAmount)}
-                  auctionAmountPen={formatPen(toPen(auctionAmount))}
-                  optionAPaymentUsd={formatUsd(monthlyPayment)}
-                />
+                  <AuctionCapitalSection
+                    auctionPayments={auctionPayments}
+                    auctionAmountUsd={formatUsd(auctionAmount)}
+                    auctionAmountPen={formatPen(toPen(auctionAmount))}
+                    optionAPaymentUsd={formatUsd(monthlyPayment)}
+                  />
+                </div>
               </div>
 
               <section
-                className="order-3 rounded-3xl border border-primary/15 bg-card p-3.5 shadow-sm min-[420px]:p-4 lg:order-2"
-                aria-labelledby="planTitle"
+                className="relative order-2 overflow-hidden rounded-3xl border border-cyan-200/80 bg-[radial-gradient(circle_at_50%_22%,rgba(56,189,248,0.5),transparent_34%),linear-gradient(180deg,#0f3ca8_0%,#075fd4_48%,#e0f2fe_100%)] px-3.5 pb-3.5 pt-0 shadow-[0_12px_28px_rgba(15,63,150,0.28)] ring-1 ring-white/40 min-[420px]:px-4 min-[420px]:pb-4"
+                aria-label="Plan de cuotas"
               >
-                <div className="mb-3 flex items-center gap-2.5">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-extrabold text-primary">
-                    5
-                  </span>
-                  <h2
-                    id="planTitle"
-                    className="text-xl font-extrabold tracking-tight"
-                  >
-                    Plan · {TOTAL_TERM_MONTHS} meses
-                  </h2>
-                </div>
                 <figure
                   ref={planFigureRef}
-                  className="relative pt-9 lg:pt-[45px]"
+                  className="relative pt-48 lg:pt-56"
                   aria-label={`${groupAdvance} meses de avance, ${paidPayments} cuotas pagadas con sorteo mensual, ${advancedPayments} adelantadas y ${remainingPayments} restantes. Adjudicación por remate en el mes ${auctionMonth}`}
                 >
+                  <div
+                    className="pointer-events-none absolute inset-x-0 top-0 z-10 h-48 overflow-hidden lg:h-56"
+                    aria-hidden="true"
+                  >
+                    <Image
+                      src="/assets/remate-suv-neon.png"
+                      alt=""
+                      width={1774}
+                      height={887}
+                      className="absolute -left-[6%] top-0 h-full w-[94%] object-contain object-left"
+                    />
+                    <Image
+                      src="/assets/remate-slogan-neon.png"
+                      alt=""
+                      width={2172}
+                      height={724}
+                      className="absolute right-[-3%] top-3 h-auto w-[48%] object-contain lg:top-5"
+                    />
+                  </div>
+
                   <button
                     type="button"
-                    className="absolute top-0 z-20 h-9 w-[82px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:h-[45px] lg:w-[140px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    style={{ left: startFlagPosition.flagLeft }}
+                    className="absolute top-[132px] z-30 size-[60px] touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[152px] lg:size-[72px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                    style={{ left: startFlagLeft }}
                     onPointerDown={(event) => startTimelineDrag('start', event)}
                     onPointerMove={moveTimelineDrag}
                     onPointerUp={stopTimelineDrag}
                     onPointerCancel={stopTimelineDrag}
                     onKeyDown={(event) => handleTimelineKeyDown('start', event)}
-                    aria-label={`Mover Inicio del plan. Avance de Grupo ${groupProgress}. Usa las flechas izquierda y derecha para ajustar.`}
-                    title="Desliza para ajustar el Avance de Grupo"
+                    aria-label={`Mover salida del plan. Avance de Grupo ${groupProgress}. Usa las flechas izquierda y derecha para ajustar.`}
+                    title="Salida del plan"
                   >
-                    <svg
-                      className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm lg:h-[45px]"
-                      viewBox={`0 0 ${timelineFlagWidths.start} 36`}
-                      preserveAspectRatio="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d={getMilestoneFlagPath(
-                          timelineFlagWidths.start,
-                          startFlagPosition.tailLeft,
-                          'above',
-                        )}
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <span className="pointer-events-none absolute inset-x-0 top-0 flex h-7 w-full items-center justify-center gap-0.5 px-1 text-center leading-none text-primary-foreground lg:h-[35px] lg:gap-2 lg:px-3">
-                      <Flag
-                        className="size-2.5 shrink-0 fill-current lg:size-[18px]"
-                        aria-hidden="true"
-                      />
-                      <strong className="whitespace-nowrap text-[9px] leading-none lg:text-sm">
-                        Inicio del plan
-                      </strong>
-                    </span>
+                    <Image
+                      src="/assets/remate-inicio-bandera.png"
+                      alt=""
+                      width={1536}
+                      height={1024}
+                      unoptimized
+                      className="absolute inset-0 size-full object-contain object-bottom"
+                    />
                   </button>
+
+                  <span
+                    className="pointer-events-none absolute top-[176px] z-[25] h-24 w-16 -translate-x-1/2 lg:top-[205px] lg:h-28 lg:w-20"
+                    style={{
+                      left: `${auctionMarkerPercent}%`,
+                    }}
+                    aria-hidden="true"
+                  >
+                    <Image
+                      src="/assets/remate-marcador-acelera.png"
+                      alt=""
+                      width={512}
+                      height={900}
+                      unoptimized
+                      className="size-full object-contain"
+                    />
+                  </span>
 
                   <button
                     type="button"
-                    className={`${placeRemateMarkerBelow ? 'top-[8.25rem] lg:top-[8.8125rem]' : 'top-0'} absolute z-20 h-9 w-[90px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:h-[45px] lg:w-[140px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500`}
-                    style={{ left: auctionFlagPosition.flagLeft }}
+                    className="absolute top-[252px] z-30 h-[57px] w-[170px] touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[290px] lg:h-[70px] lg:w-[210px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                    style={{ left: auctionFlagLeft }}
                     onPointerDown={(event) =>
                       startTimelineDrag('linked', event)
                     }
@@ -833,80 +933,46 @@ export default function Home() {
                     onKeyDown={(event) =>
                       handleTimelineKeyDown('linked', event)
                     }
-                    aria-label={`Mover Adjudicación y Última cuota juntos. Mes de remate ${auctionMonth}, ${auctionPayments} cuotas de remate. Usa las flechas izquierda y derecha para ajustar.`}
-                    title="Desliza para mover Adjudicación y Última cuota juntos"
+                    aria-label={`Mover Adjudicación y Fin juntos. Mes de remate ${auctionMonth}, ${auctionPayments} cuotas de remate. Usa las flechas izquierda y derecha para ajustar.`}
+                    title="Desliza para mover Adjudicación y Fin juntos"
                   >
-                    <svg
-                      className="absolute inset-0 h-9 w-full overflow-visible text-amber-500 drop-shadow-sm lg:h-[45px]"
-                      viewBox={`0 0 ${timelineFlagWidths.auction} 36`}
-                      preserveAspectRatio="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d={getMilestoneFlagPath(
-                          timelineFlagWidths.auction,
-                          auctionFlagPosition.tailLeft,
-                          placeRemateMarkerBelow ? 'below' : 'above',
-                        )}
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <span
-                      className={`${placeRemateMarkerBelow ? 'top-2 lg:top-2.5' : 'top-0'} pointer-events-none absolute inset-x-0 flex h-7 w-full items-center justify-center gap-0.5 px-1 text-center leading-none text-white lg:h-[35px] lg:gap-2 lg:px-3`}
-                    >
-                      <CircleDollarSign
-                        className="size-2.5 shrink-0 lg:size-[18px]"
-                        aria-hidden="true"
-                      />
-                      <strong className="whitespace-nowrap text-[9px] leading-none lg:text-sm">
-                        Adjudicación
-                      </strong>
-                    </span>
+                    <Image
+                      src="/assets/remate-adjudicacion-acelera.png"
+                      alt=""
+                      width={2172}
+                      height={724}
+                      unoptimized
+                      className="absolute left-0 top-0 h-[57px] w-[170px] max-w-none object-contain lg:h-[70px] lg:w-[210px]"
+                    />
                   </button>
 
                   <button
                     type="button"
-                    className="absolute top-0 z-20 h-9 w-[108px] -translate-x-1/2 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:h-[45px] lg:w-[132px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                    style={{ left: endFlagPosition.flagLeft }}
+                    className="absolute top-[132px] z-30 size-[60px] touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[152px] lg:size-[72px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    style={{ left: endFlagLeft }}
                     onPointerDown={(event) => startTimelineDrag('end', event)}
                     onPointerMove={moveTimelineDrag}
                     onPointerUp={stopTimelineDrag}
                     onPointerCancel={stopTimelineDrag}
                     onKeyDown={(event) => handleTimelineKeyDown('end', event)}
-                    aria-label={`Mover únicamente Última cuota. ${auctionPayments} cuotas adelantadas. Usa las flechas izquierda y derecha para ajustar.`}
-                    title="Desliza para mover únicamente Última cuota"
+                    aria-label={`Mover únicamente la llegada. ${auctionPayments} cuotas adelantadas. Usa las flechas izquierda y derecha para ajustar.`}
+                    title="Llegada del plan"
                   >
-                    <svg
-                      className="absolute inset-0 h-9 w-full overflow-visible text-primary drop-shadow-sm lg:h-[45px]"
-                      viewBox={`0 0 ${timelineFlagWidths.end} 36`}
-                      preserveAspectRatio="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d={getMilestoneFlagPath(
-                          timelineFlagWidths.end,
-                          endFlagPosition.tailLeft,
-                          'above',
-                        )}
-                        fill="currentColor"
-                      />
-                    </svg>
-                    <span className="pointer-events-none absolute inset-x-0 top-0 flex h-7 w-full items-center justify-center gap-0.5 px-1 text-center leading-none text-primary-foreground lg:h-[35px] lg:gap-2 lg:px-3">
-                      <Flag
-                        className="size-2.5 shrink-0 lg:size-[18px]"
-                        aria-hidden="true"
-                      />
-                      <strong className="whitespace-nowrap text-[9px] leading-none lg:text-sm">
-                        Última cuota
-                      </strong>
-                    </span>
+                    <Image
+                      src="/assets/remate-fin-bandera.png"
+                      alt=""
+                      width={1536}
+                      height={1024}
+                      unoptimized
+                      className="absolute inset-0 size-full object-contain object-bottom"
+                    />
                   </button>
 
                   <div ref={planBarRef} className="relative">
-                    <div className="flex h-24 w-full overflow-hidden rounded-xl border border-primary/20 bg-muted">
+                    <div className="flex h-[60px] w-full overflow-hidden rounded-xl border-2 border-cyan-200 bg-muted shadow-[0_0_10px_rgba(34,211,238,0.75),0_0_24px_rgba(37,99,235,0.55)] lg:h-[66px]">
                       {groupAdvance > 0 && (
                         <span
-                          className="flex h-full min-w-0 items-center justify-center overflow-hidden px-1 text-center text-slate-600"
+                          className="flex h-full min-w-0 items-center justify-center overflow-hidden text-center text-slate-600"
                           style={{
                             width: `${(groupAdvance / planTimelineMonths) * 100}%`,
                             backgroundColor: 'rgb(226 232 240)',
@@ -915,18 +981,16 @@ export default function Home() {
                           }}
                           title={`Meses de Avance: ${groupAdvance}`}
                         >
-                          <span className="min-w-0 overflow-hidden leading-tight">
-                            <span className="block truncate text-[10px] font-bold min-[420px]:text-xs lg:text-sm">
-                              {groupAdvance >= 6 ? 'Meses de Avance' : 'Avance'}
-                            </span>
-                            <strong className="mt-1 block text-xl font-extrabold leading-none min-[420px]:text-2xl">
-                              {groupAdvance}
-                            </strong>
-                          </span>
+                          <TimelineSegmentLabel
+                            label="Avance"
+                            value={groupAdvance}
+                            segment="advance"
+                            onDisplayChange={updateTimelineSegmentDisplay}
+                          />
                         </span>
                       )}
                       <span
-                        className="flex h-full min-w-0 items-center justify-center overflow-hidden px-0.5 text-center text-white"
+                        className="flex h-full min-w-0 items-center justify-center overflow-hidden text-center text-white"
                         style={{
                           width: `${(paidPayments / planTimelineMonths) * 100}%`,
                           backgroundColor: 'rgb(22 163 74)',
@@ -935,17 +999,15 @@ export default function Home() {
                         }}
                         title={`Pagadas: ${paidPayments}. Periodo con sorteo mensual`}
                       >
-                        <span className="min-w-0 overflow-hidden leading-tight">
-                          <span className="block truncate text-[10px] font-bold min-[420px]:text-xs lg:text-sm">
-                            Pagadas
-                          </span>
-                          <strong className="mt-1 block text-xl font-extrabold leading-none min-[420px]:text-2xl">
-                            {paidPayments}
-                          </strong>
-                        </span>
+                        <TimelineSegmentLabel
+                          label="Pagadas"
+                          value={paidPayments}
+                          segment="paid"
+                          onDisplayChange={updateTimelineSegmentDisplay}
+                        />
                       </span>
                       <span
-                        className="flex h-full min-w-0 items-center justify-center overflow-hidden border-l-2 border-orange-400 px-1 text-center text-white"
+                        className="flex h-full min-w-0 items-center justify-center overflow-hidden border-l-2 border-orange-400 text-center text-white"
                         style={{
                           width: `${(remainingPayments / planTimelineMonths) * 100}%`,
                           backgroundColor: 'rgb(29 78 216)',
@@ -954,37 +1016,29 @@ export default function Home() {
                         }}
                         title={`Restantes: ${remainingPayments}`}
                       >
-                        <span className="min-w-0 overflow-hidden leading-tight">
-                          <span className="block truncate text-[10px] font-bold min-[420px]:text-xs lg:text-sm">
-                            Restantes
-                          </span>
-                          <strong className="mt-1 block text-xl font-extrabold leading-none min-[420px]:text-2xl">
-                            {remainingPayments}
-                          </strong>
-                        </span>
+                        <TimelineSegmentLabel
+                          label="Restantes"
+                          value={remainingPayments}
+                          segment="remaining"
+                          onDisplayChange={updateTimelineSegmentDisplay}
+                        />
                       </span>
                       <span
-                        className="flex h-full min-w-0 items-center justify-center overflow-hidden border-l-2 border-primary/60 px-1 text-center text-slate-500"
+                        className="flex h-full min-w-0 items-center justify-center overflow-hidden border-l-2 border-primary/60 text-center text-slate-500"
                         style={{
                           width: `${(advancedPayments / planTimelineMonths) * 100}%`,
                           backgroundColor: 'rgb(248 250 252 / 88%)',
                           backgroundImage:
-                            'repeating-linear-gradient(135deg, rgb(148 163 184 / 24%) 0, rgb(148 163 184 / 24%) 1px, transparent 1px, transparent 7px)',
+                            'repeating-linear-gradient(135deg, rgb(100 116 139 / 42%) 0, rgb(100 116 139 / 42%) 1.5px, transparent 1.5px, transparent 8px)',
                         }}
                         title={`Adelantadas y abonadas: ${advancedPayments}`}
                       >
-                        <span className="min-w-0 overflow-hidden leading-tight opacity-75">
-                          <span className="flex items-center justify-center gap-1 truncate text-[9px] font-bold min-[420px]:text-xs lg:text-sm">
-                            <CalendarCheck2
-                              className="size-3 shrink-0"
-                              aria-hidden="true"
-                            />
-                            Adelantadas
-                          </span>
-                          <strong className="mt-1 block text-xl font-extrabold leading-none min-[420px]:text-2xl">
-                            {advancedPayments}
-                          </strong>
-                        </span>
+                        <TimelineSegmentLabel
+                          label="Adelantadas"
+                          value={advancedPayments}
+                          segment="advanced"
+                          onDisplayChange={updateTimelineSegmentDisplay}
+                        />
                       </span>
                     </div>
 
@@ -999,46 +1053,44 @@ export default function Home() {
                       title="Plazo de financiamiento: cuotas pagadas y cuotas restantes"
                       aria-hidden="true"
                     />
-
-                    <span
-                      className="pointer-events-none absolute top-1/2 z-30 flex h-12 w-[82px] -translate-x-1/2 -translate-y-1/2 items-center justify-center lg:h-[72px] lg:w-[132px]"
-                      style={{ left: `${auctionMarkerPercent}%` }}
-                      aria-label="Vehículo adjudicado en el remate"
-                    >
-                      <span
-                        className="absolute inset-[8%] -z-10 rounded-[50%] bg-cyan-100/80 blur-md lg:inset-[5%] lg:blur-lg"
-                        aria-hidden="true"
-                      />
-                      <Image
-                        src="/assets/remate-car-photorealistic.png"
-                        alt=""
-                        width={112}
-                        height={57}
-                        className="h-full w-full object-contain"
-                        style={{
-                          filter:
-                            'drop-shadow(0 0 1px rgb(255 255 255)) drop-shadow(0 0 5px rgb(125 211 252 / 90%)) drop-shadow(0 6px 6px rgb(15 23 42 / 35%))',
-                        }}
-                      />
-                    </span>
                   </div>
-                  <figcaption
-                    className={`${placeRemateMarkerBelow ? 'mt-10' : 'mt-2'} flex min-w-0 justify-end text-xs font-medium min-[420px]:text-sm`}
-                  >
-                    <span className="whitespace-nowrap rounded-full bg-sky-50 px-3 py-1.5">
-                      <strong className="text-primary">
-                        Mes {auctionMonth}
-                      </strong>
-                      <span className="text-muted-foreground">
-                        {' '}
-                        · Adjudicación por remate
-                      </span>
-                    </span>
-                  </figcaption>
+                  {timelineSummaryCards.some(({ isCompact }) => isCompact) && (
+                    <div
+                      className="mt-16 grid grid-cols-2 items-start gap-3 lg:mt-20"
+                      aria-label="Resumen de cuotas no visible en la barra"
+                    >
+                      {[
+                        timelineSummaryCards.slice(0, 2),
+                        timelineSummaryCards.slice(2),
+                      ].map((group, groupIndex) => (
+                        <div
+                          key={groupIndex === 0 ? 'left' : 'right'}
+                          className={`flex min-w-0 flex-col gap-1.5 ${groupIndex === 0 ? 'items-start min-[540px]:justify-start' : 'items-end min-[540px]:justify-end'} min-[540px]:flex-row`}
+                        >
+                          {group
+                            .filter(({ isCompact }) => isCompact)
+                            .map(({ key, label, value, className, style }) => (
+                              <span
+                                key={key}
+                                className={`${className} inline-flex max-w-full items-center gap-1.5 rounded-xl border px-2 py-1.5 shadow-sm`}
+                                style={style}
+                              >
+                                <strong className="whitespace-nowrap text-[11px] font-bold leading-none min-[420px]:text-xs">
+                                  {label}
+                                </strong>
+                                <strong className="text-base font-extrabold leading-none tabular-nums">
+                                  {value}
+                                </strong>
+                              </span>
+                            ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </figure>
               </section>
 
-              <div className="order-2 lg:order-3">
+              <div className="order-3">
                 <AuctionOptionsSection
                   optionARemainingPayments={proratedRemainingPayments}
                   optionAPaymentUsd={formatUsd(monthlyPayment)}

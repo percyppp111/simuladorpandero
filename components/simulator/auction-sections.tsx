@@ -59,21 +59,21 @@ export function AuctionMonthSection({
 }: AuctionMonthSectionProps) {
   return (
     <section
-      className="bg-transparent lg:col-span-1"
+      className="bg-transparent"
       aria-labelledby="auctionMonthTitle"
     >
-      <div className="h-full rounded-t-3xl border-x border-t border-primary/15 bg-card p-3 min-[420px]:p-4 lg:rounded-tr-none lg:border-r-0">
+      <div className="h-full border-b border-primary/10 bg-card p-3 min-[420px]:p-4">
         <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
           <div className="flex min-w-0 items-center gap-1">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-              3
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/[0.07] text-primary">
+              <CalendarDays className="size-4" aria-hidden="true" />
             </span>
             <div className="grid min-w-0 content-start gap-0.5 pt-px">
               <h2
                 id="auctionMonthTitle"
                 className="whitespace-nowrap text-sm font-extrabold leading-tight tracking-tight min-[360px]:text-base"
               >
-                Mes de remate
+                Mes de adjudicación
               </h2>
               <p className="text-xs font-medium leading-tight text-muted-foreground">
                 Decide cuándo avanzar.
@@ -81,11 +81,8 @@ export function AuctionMonthSection({
             </div>
           </div>
           <div className="flex items-center gap-1 justify-self-end">
-            <span className="flex size-8 items-center justify-center rounded-full bg-primary/[0.07] text-primary">
-              <CalendarDays className="size-4" aria-hidden="true" />
-            </span>
             <label className="sr-only" htmlFor="auctionMonth">
-              Seleccionar mes de remate
+              Seleccionar mes de adjudicación
             </label>
             <span className="relative block">
               <select
@@ -144,21 +141,21 @@ export function AuctionPaymentsSection({
 }: AuctionPaymentsSectionProps) {
   return (
     <section
-      className="bg-transparent lg:col-span-1"
+      className="bg-transparent"
       aria-labelledby="auctionPaymentsTitle"
     >
-      <div className="h-full border-x border-t border-primary/15 bg-card p-3 min-[420px]:p-4 lg:rounded-tr-3xl">
+      <div className="h-full border-b border-primary/10 bg-card p-3 min-[420px]:p-4">
         <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
           <div className="flex min-w-0 items-center gap-1">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-              4
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/[0.07] text-primary">
+              <CircleDollarSign className="size-4.5" aria-hidden="true" />
             </span>
             <div className="grid min-w-0 content-start gap-0.5 pt-px">
               <h2
                 id="auctionPaymentsTitle"
                 className="whitespace-nowrap text-sm font-extrabold leading-tight tracking-tight min-[360px]:text-base"
               >
-                Cuotas de remate
+                Cuotas a adelantar
               </h2>
               <p className="text-xs font-medium leading-tight text-muted-foreground">
                 Tú defines el monto
@@ -166,11 +163,8 @@ export function AuctionPaymentsSection({
             </div>
           </div>
           <div className="flex items-center gap-1 justify-self-end">
-            <span className="flex size-8 items-center justify-center rounded-full bg-primary/[0.07] text-primary">
-              <CircleDollarSign className="size-4.5" aria-hidden="true" />
-            </span>
             <label className="sr-only" htmlFor="auctionPayments">
-              Seleccionar cuotas de remate
+              Seleccionar cuotas a adelantar
             </label>
             <span className="relative block">
               <select
@@ -227,27 +221,27 @@ export function AuctionCapitalSection({
 }: AuctionCapitalSectionProps) {
   return (
     <section
-      className="bg-transparent lg:col-span-2"
+      className="bg-card px-3 pb-3 pt-3 min-[420px]:px-4 min-[420px]:pb-4 min-[420px]:pt-4"
       aria-labelledby="auctionCapitalTitle"
     >
-      <div className="rounded-b-3xl border border-cyan-300 bg-gradient-to-br from-sky-500 via-primary to-blue-800 p-3.5 text-white shadow-md min-[420px]:p-4">
-        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2.5 max-[389px]:gap-x-1.5 lg:grid-cols-[auto_auto_auto] lg:justify-center lg:gap-x-8">
+      <div className="rounded-2xl border border-cyan-300 bg-gradient-to-br from-sky-500 via-primary to-blue-800 p-3.5 text-white shadow-md min-[420px]:p-4">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2.5 max-[389px]:gap-x-1.5">
           <span className="flex size-10 items-center justify-center rounded-xl bg-white/15 text-white max-[389px]:size-9">
             <Banknote className="size-5" aria-hidden="true" />
           </span>
-          <span className="min-w-0 lg:text-center">
+          <span className="min-w-0">
             <h2
               id="auctionCapitalTitle"
               className="whitespace-nowrap text-lg font-extrabold tracking-tight text-white max-[389px]:text-[17px] min-[420px]:text-xl"
             >
               Capital de Remate
             </h2>
-            <span className="mt-1 block whitespace-nowrap text-left text-sm font-medium not-italic leading-none text-white/90 max-[389px]:text-xs min-[420px]:text-[15px] lg:text-center">
+            <span className="mt-1 block whitespace-nowrap text-left text-sm font-medium not-italic leading-none text-white/90 max-[389px]:text-xs min-[420px]:text-[15px]">
               {auctionPayments} cuotas × US${' '}
               {optionAPaymentUsd.replace(/^\$/, '')}
             </span>
           </span>
-          <span className="min-w-0 text-right lg:text-center">
+          <span className="min-w-0 text-right">
             <strong className="block max-w-full whitespace-nowrap text-xl font-extrabold leading-none tracking-tight text-white tabular-nums max-[389px]:text-lg min-[420px]:text-2xl">
               {auctionAmountUsd}
             </strong>
@@ -278,7 +272,7 @@ export function AuctionOptionsSection({
               <div className="min-w-0">
                 <h3
                   id="auctionOptionsTitle"
-                  className="max-w-[28rem] text-xl font-extrabold leading-tight tracking-tight text-primary min-[420px]:text-2xl lg:max-w-none lg:whitespace-nowrap"
+                  className="max-w-[28rem] text-xl font-extrabold leading-tight tracking-tight text-primary min-[420px]:text-2xl"
                 >
                   Adapta tus últimas cuotas a tu objetivo
                 </h3>
@@ -293,18 +287,18 @@ export function AuctionOptionsSection({
             </div>
           </div>
         </div>
-        <dl className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+        <dl className="space-y-2">
           <div className="rounded-3xl border border-sky-200 bg-card p-3.5 shadow-sm min-[420px]:p-4">
             <dt className="flex min-w-0 items-center gap-2 border-b border-primary/15 pb-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-blue-600">
                 <TrendingUp className="size-5.5" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="flex min-w-0 items-center gap-2 lg:gap-1 xl:gap-2">
-                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl lg:text-[19px] xl:text-xl">
+                <span className="flex min-w-0 items-center gap-2">
+                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl">
                     Opción A
                   </strong>
-                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-sky-100 px-2 py-2 text-center text-[10px] font-bold leading-none text-blue-600 min-[360px]:text-[11px] lg:px-1.5 lg:text-[10px] xl:px-2 xl:text-[11px]">
+                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-sky-100 px-2 py-2 text-center text-[10px] font-bold leading-none text-blue-600 min-[360px]:text-[11px]">
                     <Star
                       className="size-3 shrink-0 fill-current"
                       aria-hidden="true"
@@ -348,11 +342,11 @@ export function AuctionOptionsSection({
                 <TrendingDown className="size-5.5" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="flex min-w-0 items-center gap-2 lg:gap-1 xl:gap-2">
-                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl lg:text-[19px] xl:text-xl">
+                <span className="flex min-w-0 items-center gap-2">
+                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl">
                     Opción B
                   </strong>
-                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-emerald-100/80 px-2 py-2 text-center text-[10px] font-bold leading-none text-emerald-700 min-[360px]:text-[11px] lg:px-1.5 lg:text-[10px] xl:px-2 xl:text-[11px] dark:bg-emerald-950/50 dark:text-emerald-300">
+                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-emerald-100/80 px-2 py-2 text-center text-[10px] font-bold leading-none text-emerald-700 min-[360px]:text-[11px] dark:bg-emerald-950/50 dark:text-emerald-300">
                     <Leaf className="size-3 shrink-0" aria-hidden="true" />
                     <span className="whitespace-nowrap">Cuota más cómoda</span>
                   </span>
