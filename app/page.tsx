@@ -922,7 +922,7 @@ export default function Home() {
 
                   <button
                     type="button"
-                    className="absolute top-[252px] z-30 h-[57px] w-[170px] touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[290px] lg:h-[70px] lg:w-[210px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                    className="absolute top-[236px] z-30 h-[57px] w-[170px] touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[274px] lg:h-[70px] lg:w-[210px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                     style={{ left: auctionFlagLeft }}
                     onPointerDown={(event) =>
                       startTimelineDrag('linked', event)
@@ -1056,7 +1056,7 @@ export default function Home() {
                   </div>
                   {timelineSummaryCards.some(({ isCompact }) => isCompact) && (
                     <div
-                      className="mt-16 grid grid-cols-2 items-start gap-3 lg:mt-20"
+                      className="mt-12 grid grid-cols-2 items-start gap-3 lg:mt-16"
                       aria-label="Resumen de cuotas no visible en la barra"
                     >
                       {[
@@ -1065,14 +1065,14 @@ export default function Home() {
                       ].map((group, groupIndex) => (
                         <div
                           key={groupIndex === 0 ? 'left' : 'right'}
-                          className={`flex min-w-0 flex-col gap-1.5 ${groupIndex === 0 ? 'items-start min-[540px]:justify-start' : 'items-end min-[540px]:justify-end'} min-[540px]:flex-row`}
+                          className={`flex min-w-0 gap-1.5 ${groupIndex === 0 ? 'flex-row items-stretch justify-start' : 'flex-col items-end min-[540px]:flex-row min-[540px]:justify-end'}`}
                         >
                           {group
                             .filter(({ isCompact }) => isCompact)
                             .map(({ key, label, value, className, style }) => (
                               <span
                                 key={key}
-                                className={`${className} inline-flex max-w-full items-center gap-1.5 rounded-xl border px-2 py-1.5 shadow-sm`}
+                                className={`${className} ${groupIndex === 0 ? 'flex min-w-0 max-w-[5.5rem] flex-1 basis-0 flex-col items-center justify-center gap-0.5 text-center' : 'inline-flex max-w-full items-center gap-1.5'} rounded-xl border px-2 py-1.5 shadow-sm`}
                                 style={style}
                               >
                                 <strong className="whitespace-nowrap text-[11px] font-bold leading-none min-[420px]:text-xs">
