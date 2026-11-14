@@ -14,11 +14,9 @@ import {
 import {
   CalendarDays,
   Clock3,
-  Coins,
   CreditCard,
   ReceiptText,
   Trash2,
-  WalletCards,
 } from 'lucide-react';
 
 import {
@@ -272,16 +270,14 @@ export default function Home() {
   const endMarkerPercent =
     ((groupAdvance + paidPayments + remainingPayments) / planTimelineMonths) *
     100;
-  const raceFlagWidth = isDesktopTimeline ? 72 : 60;
-  const auctionFlagWidth = isDesktopTimeline ? 210 : 170;
+  const raceFlagWidth = isDesktopTimeline ? 32 : 28;
   const timelineBarWidth = Math.max(planFigureWidth, 1);
-  const startFlagPoleOffset = raceFlagWidth * 0.12;
-  const endFlagPoleOffset = raceFlagWidth * 0.17;
+  const startFlagPoleOffset = raceFlagWidth / 2;
+  const endFlagPoleOffset = raceFlagWidth / 2;
   const startFlagLeft =
     (startMarkerPercent / 100) * timelineBarWidth - startFlagPoleOffset;
   const auctionFlagLeft =
-    (auctionMarkerPercent / 100) * timelineBarWidth -
-    auctionFlagWidth * 0.16;
+    (auctionMarkerPercent / 100) * timelineBarWidth - raceFlagWidth / 2;
   const endFlagLeft =
     (endMarkerPercent / 100) * timelineBarWidth - endFlagPoleOffset;
   const auctionAmount = monthlyPayment * advancedPayments;
@@ -575,7 +571,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background px-3 py-3 sm:px-5 sm:py-4">
-      <div className="mx-auto w-full max-w-5xl lg:max-w-[49rem]">
+      <div className="mx-auto w-full max-w-5xl lg:max-w-[50rem]">
         <header className="mb-3 border-b pb-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
@@ -588,7 +584,7 @@ export default function Home() {
         </header>
 
         <div className="grid gap-0 bg-transparent lg:grid-cols-12">
-          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(300px,21rem)_minmax(0,1fr)] lg:items-stretch lg:gap-4">
+          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(300px,22rem)_minmax(0,1fr)] lg:items-stretch lg:gap-4">
             <div className="grid gap-3 lg:self-start">
               <section
                 className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
@@ -719,89 +715,81 @@ export default function Home() {
                 className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
                 aria-labelledby="certificateSummaryTitle"
               >
-                <div className="relative overflow-hidden bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-4 py-4 text-white">
+                <div className="relative overflow-hidden bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-5 py-5 text-white">
                   <div className="absolute -bottom-8 right-4 h-20 w-52 rotate-[-8deg] rounded-[50%] bg-sky-300/20" />
-                  <div className="relative flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-base font-extrabold text-primary shadow-md">
-                        1
-                      </span>
-                      <span className="h-10 w-px shrink-0 bg-white/70" />
-                      <span className="min-w-0">
-                        <h2
-                          id="certificateSummaryTitle"
-                          className="text-xl font-extrabold leading-none tracking-tight lg:text-[17px]"
-                        >
-                          Plan de Financiamiento
-                        </h2>
-                        <span className="mt-1.5 block text-xs font-medium leading-tight text-white/90">
-                          Resumen Pandero 0KM y Seminuevos
-                        </span>
-                      </span>
-                    </div>
-                    <Coins className="size-8 shrink-0" aria-hidden="true" />
+                  <div className="relative min-w-0">
+                    <h2
+                      id="certificateSummaryTitle"
+                      className="text-2xl font-extrabold leading-tight tracking-tight lg:text-[23px]"
+                    >
+                      Plan de Financiamiento
+                    </h2>
+                    <span className="mt-1 block text-[15px] font-medium leading-tight text-white/90">
+                      Resumen Pandero 0KM y Seminuevos
+                    </span>
                   </div>
                 </div>
 
                 <dl className="px-3.5 pb-4 pt-3">
-                  <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-2xl border-2 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50/90 px-3 py-3 shadow-[0_5px_14px_rgb(14_165_233/16%)]">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/80 text-primary shadow-sm">
-                      <WalletCards className="size-6" aria-hidden="true" />
-                    </span>
-                    <dt className="border-l border-sky-300 pl-2.5 text-base font-bold leading-tight text-slate-950">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border-2 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50/90 px-4 py-3.5 shadow-[0_5px_14px_rgb(14_165_233/16%)]">
+                    <dt className="text-xl font-extrabold leading-tight text-slate-950">
                       Certificado
                     </dt>
                     <dd className="min-w-0 text-right tabular-nums">
-                      <span className="block whitespace-nowrap text-xl font-extrabold leading-none tracking-tight text-primary">
+                      <span className="block whitespace-nowrap text-2xl font-extrabold leading-none tracking-tight text-primary">
                         {formatUsd(selectedCertificate.amountUsd)}
                       </span>
-                      <span className="mt-1 block whitespace-nowrap text-sm font-medium leading-none text-slate-600">
+                      <span className="mt-1 block whitespace-nowrap text-[17px] font-semibold leading-none text-slate-600">
                         {formatPen(toPen(selectedCertificate.amountUsd))}
                       </span>
                     </dd>
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-3 border-b border-sky-100 py-2.5">
+                  <div className="mt-2 flex items-center justify-between gap-2.5 border-b border-sky-100 py-2">
                     <div className="flex min-w-0 items-center gap-2.5">
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
                         <ReceiptText className="size-4.5" aria-hidden="true" />
                       </span>
-                      <dt className="text-[15px] font-medium text-slate-800">
+                      <dt className="text-base font-medium text-slate-800">
                         C. de Inscripción
                       </dt>
                     </div>
-                    <dd className="whitespace-nowrap text-right text-lg font-extrabold tracking-tight text-slate-950 tabular-nums">
-                      {formatUsd(registrationFee)}
-                      <span className="ml-1 text-xs font-medium text-slate-500">
+                    <dd className="flex shrink-0 flex-col items-end text-right text-xl font-extrabold tracking-tight text-slate-950 tabular-nums lg:flex-row lg:items-baseline lg:gap-0.5">
+                      <span className="whitespace-nowrap">
+                        {formatUsd(registrationFee)}
+                      </span>
+                      <span className="mt-0.5 whitespace-nowrap text-[13px] font-medium text-slate-500 lg:mt-0">
                         (4% + IGV)
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-3 border-b border-sky-100 py-2.5">
+                  <div className="flex items-center justify-between gap-2.5 border-b border-sky-100 py-2">
                     <div className="flex min-w-0 items-center gap-2.5">
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
                         <CalendarDays className="size-4.5" aria-hidden="true" />
                       </span>
-                      <dt className="text-[15px] font-medium text-slate-800">
+                      <dt className="text-base font-medium text-slate-800">
                         Cuota mensual
                       </dt>
                     </div>
-                    <dd className="whitespace-nowrap text-right text-lg font-extrabold tracking-tight text-sky-600 tabular-nums">
-                      {formatUsd(monthlyPayment)}
-                      <span className="ml-1 text-xs font-medium text-slate-500">
+                    <dd className="flex shrink-0 flex-col items-end text-right text-xl font-extrabold tracking-tight text-sky-600 tabular-nums lg:flex-row lg:items-baseline lg:gap-0.5">
+                      <span className="whitespace-nowrap">
+                        {formatUsd(monthlyPayment)}
+                      </span>
+                      <span className="mt-0.5 whitespace-nowrap text-[13px] font-medium text-slate-500 lg:mt-0">
                         {formatPen(toPen(monthlyPayment))}
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-3 border-b border-sky-100 py-2.5">
+                  <div className="flex items-center justify-between gap-2.5 border-b border-sky-100 py-2">
                     <div className="flex min-w-0 items-center gap-2.5">
                       <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
                         <Clock3 className="size-4.5" aria-hidden="true" />
                       </span>
-                      <dt className="text-[15px] font-medium text-slate-800">
+                      <dt className="text-base font-medium text-slate-800">
                         Plazo
                       </dt>
                     </div>
-                    <dd className="whitespace-nowrap text-lg font-extrabold tracking-tight text-slate-950 tabular-nums">
+                    <dd className="whitespace-nowrap text-xl font-extrabold tracking-tight text-slate-950 tabular-nums">
                       {termMonths} meses
                     </dd>
                   </div>
@@ -809,18 +797,18 @@ export default function Home() {
                     <span className="absolute inset-y-0 left-[58%] w-16 skew-x-[-28deg] bg-sky-400/25" />
                     <div className="relative flex items-center justify-between gap-3">
                       <dt className="min-w-0">
-                        <span className="block text-lg font-extrabold leading-tight">
+                        <span className="block text-xl font-extrabold leading-tight">
                           Total para ingreso
                         </span>
-                        <span className="mt-1 block text-[11px] font-medium leading-tight text-white/85">
+                        <span className="mt-1 block text-xs font-medium leading-tight text-white/85">
                           (C. de Inscripción + 1ra Cuota)
                         </span>
                       </dt>
                       <dd className="text-right font-bold tracking-tight tabular-nums">
-                        <span className="block whitespace-nowrap text-2xl font-extrabold leading-none">
+                        <span className="block whitespace-nowrap text-[26px] font-extrabold leading-none">
                           {formatUsd(totalEntry)}
                         </span>
-                        <span className="mt-1 block whitespace-nowrap text-base font-medium leading-none text-white/90">
+                        <span className="mt-1 block whitespace-nowrap text-[17px] font-medium leading-none text-white/90">
                           {formatPen(toPen(totalEntry))}
                         </span>
                       </dd>
@@ -828,6 +816,38 @@ export default function Home() {
                   </div>
                 </dl>
               </section>
+
+              <div
+                className="grid grid-cols-2 items-stretch gap-3 px-3 py-2 lg:py-3"
+                aria-label="Ilustraciones de aporte y sorteo"
+              >
+                <div className="relative aspect-square w-full overflow-hidden rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-white to-sky-50/80 shadow-[0_5px_14px_rgb(14_165_233/14%)] ring-1 ring-white">
+                  <Image
+                    src="/assets/ilustracion-aporte.png"
+                    alt="Aporte para el plan"
+                    fill
+                    sizes="(min-width: 1024px) 160px, 45vw"
+                    className="translate-y-3 scale-[1.4] object-contain"
+                    style={{
+                      filter:
+                        'contrast(1.24) saturate(1.08) drop-shadow(0 0 0.8px rgba(15,60,168,0.95)) drop-shadow(0 1px 0 rgba(15,60,168,0.8))',
+                    }}
+                  />
+                </div>
+                <div className="relative aspect-square w-full overflow-hidden rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-white to-sky-50/80 shadow-[0_5px_14px_rgb(14_165_233/14%)] ring-1 ring-white">
+                  <Image
+                    src="/assets/ilustracion-sorteo.png"
+                    alt="Sorteo del plan"
+                    fill
+                    sizes="(min-width: 1024px) 160px, 45vw"
+                    className="object-contain"
+                    style={{
+                      filter:
+                        'contrast(1.24) saturate(1.08) drop-shadow(0 0 0.8px rgba(15,60,168,0.95)) drop-shadow(0 1px 0 rgba(15,60,168,0.8))',
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 bg-transparent lg:self-start">
@@ -853,7 +873,7 @@ export default function Home() {
               </div>
 
               <section
-                className="relative order-2 overflow-hidden rounded-3xl border border-cyan-200/80 bg-[radial-gradient(circle_at_50%_22%,rgba(56,189,248,0.5),transparent_34%),linear-gradient(180deg,#0f3ca8_0%,#075fd4_48%,#e0f2fe_100%)] px-3.5 pb-3.5 pt-0 shadow-[0_12px_28px_rgba(15,63,150,0.28)] ring-1 ring-white/40 min-[420px]:px-4 min-[420px]:pb-4"
+                className="relative order-3 overflow-hidden rounded-3xl border border-cyan-200/80 bg-[radial-gradient(circle_at_50%_22%,rgba(56,189,248,0.5),transparent_34%),linear-gradient(180deg,#0f3ca8_0%,#075fd4_48%,#e0f2fe_100%)] px-3.5 pb-3.5 pt-0 shadow-[0_12px_28px_rgba(15,63,150,0.28)] ring-1 ring-white/40 min-[420px]:px-4 min-[420px]:pb-4"
                 aria-label="Plan de cuotas"
               >
                 <figure
@@ -883,7 +903,7 @@ export default function Home() {
 
                   <button
                     type="button"
-                    className="absolute top-[132px] z-30 size-[60px] touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[152px] lg:size-[72px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
+                    className="absolute top-[178px] z-30 size-7 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[208px] lg:size-8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500"
                     style={{ left: startFlagLeft }}
                     onPointerDown={(event) => startTimelineDrag('start', event)}
                     onPointerMove={moveTimelineDrag}
@@ -893,36 +913,12 @@ export default function Home() {
                     aria-label={`Mover salida del plan. Avance de Grupo ${groupProgress}. Usa las flechas izquierda y derecha para ajustar.`}
                     title="Salida del plan"
                   >
-                    <Image
-                      src="/assets/remate-inicio-bandera.png"
-                      alt=""
-                      width={1536}
-                      height={1024}
-                      unoptimized
-                      className="absolute inset-0 size-full object-contain object-bottom"
-                    />
+                    <span className="absolute inset-1 rounded-full border-2 border-white bg-emerald-500 shadow-[0_0_10px_rgba(34,197,94,0.95)]" />
                   </button>
-
-                  <span
-                    className="pointer-events-none absolute top-[176px] z-[25] h-24 w-16 -translate-x-1/2 lg:top-[205px] lg:h-28 lg:w-20"
-                    style={{
-                      left: `${auctionMarkerPercent}%`,
-                    }}
-                    aria-hidden="true"
-                  >
-                    <Image
-                      src="/assets/remate-marcador-acelera.png"
-                      alt=""
-                      width={512}
-                      height={900}
-                      unoptimized
-                      className="size-full object-contain"
-                    />
-                  </span>
 
                   <button
                     type="button"
-                    className="absolute top-[236px] z-30 h-[57px] w-[170px] touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[274px] lg:h-[70px] lg:w-[210px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                    className="absolute top-[178px] z-30 size-7 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[208px] lg:size-8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                     style={{ left: auctionFlagLeft }}
                     onPointerDown={(event) =>
                       startTimelineDrag('linked', event)
@@ -936,19 +932,12 @@ export default function Home() {
                     aria-label={`Mover Adjudicación y Fin juntos. Mes de remate ${auctionMonth}, ${auctionPayments} cuotas de remate. Usa las flechas izquierda y derecha para ajustar.`}
                     title="Desliza para mover Adjudicación y Fin juntos"
                   >
-                    <Image
-                      src="/assets/remate-adjudicacion-acelera.png"
-                      alt=""
-                      width={2172}
-                      height={724}
-                      unoptimized
-                      className="absolute left-0 top-0 h-[57px] w-[170px] max-w-none object-contain lg:h-[70px] lg:w-[210px]"
-                    />
+                    <span className="absolute inset-1 rounded-full border-2 border-white bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.95)]" />
                   </button>
 
                   <button
                     type="button"
-                    className="absolute top-[132px] z-30 size-[60px] touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[152px] lg:size-[72px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                    className="absolute top-[178px] z-30 size-7 touch-none select-none border-0 bg-transparent p-0 cursor-ew-resize lg:top-[208px] lg:size-8 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                     style={{ left: endFlagLeft }}
                     onPointerDown={(event) => startTimelineDrag('end', event)}
                     onPointerMove={moveTimelineDrag}
@@ -958,14 +947,7 @@ export default function Home() {
                     aria-label={`Mover únicamente la llegada. ${auctionPayments} cuotas adelantadas. Usa las flechas izquierda y derecha para ajustar.`}
                     title="Llegada del plan"
                   >
-                    <Image
-                      src="/assets/remate-fin-bandera.png"
-                      alt=""
-                      width={1536}
-                      height={1024}
-                      unoptimized
-                      className="absolute inset-0 size-full object-contain object-bottom"
-                    />
+                    <span className="absolute inset-1 rounded-full border-2 border-white bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.95)]" />
                   </button>
 
                   <div ref={planBarRef} className="relative">
@@ -1054,9 +1036,11 @@ export default function Home() {
                       aria-hidden="true"
                     />
                   </div>
-                  {timelineSummaryCards.some(({ isCompact }) => isCompact) && (
+                  {timelineSummaryCards.some(
+                    ({ key, isCompact }) => key !== 'advance' && isCompact,
+                  ) && (
                     <div
-                      className="mt-12 grid grid-cols-2 items-start gap-3 lg:mt-16"
+                      className="mt-4 grid grid-cols-2 items-start gap-3 lg:mt-5"
                       aria-label="Resumen de cuotas no visible en la barra"
                     >
                       {[
@@ -1068,7 +1052,10 @@ export default function Home() {
                           className={`flex min-w-0 gap-1.5 ${groupIndex === 0 ? 'flex-row items-stretch justify-start' : 'flex-col items-end min-[540px]:flex-row min-[540px]:justify-end'}`}
                         >
                           {group
-                            .filter(({ isCompact }) => isCompact)
+                            .filter(
+                              ({ key, isCompact }) =>
+                                key !== 'advance' && isCompact,
+                            )
                             .map(({ key, label, value, className, style }) => (
                               <span
                                 key={key}
@@ -1090,7 +1077,7 @@ export default function Home() {
                 </figure>
               </section>
 
-              <div className="order-3">
+              <div className="order-2">
                 <AuctionOptionsSection
                   optionARemainingPayments={proratedRemainingPayments}
                   optionAPaymentUsd={formatUsd(monthlyPayment)}

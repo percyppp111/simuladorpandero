@@ -272,7 +272,7 @@ export function AuctionOptionsSection({
               <div className="min-w-0">
                 <h3
                   id="auctionOptionsTitle"
-                  className="max-w-[28rem] text-xl font-extrabold leading-tight tracking-tight text-primary min-[420px]:text-2xl"
+                  className="max-w-[28rem] text-xl font-extrabold leading-tight tracking-tight text-primary min-[420px]:text-2xl lg:text-[28px]"
                 >
                   Adapta tus últimas cuotas a tu objetivo
                 </h3>
@@ -288,94 +288,94 @@ export function AuctionOptionsSection({
           </div>
         </div>
         <dl className="space-y-2">
-          <div className="rounded-3xl border border-sky-200 bg-card p-3.5 shadow-sm min-[420px]:p-4">
+          <div className="rounded-3xl border border-sky-300 bg-gradient-to-br from-sky-100 via-blue-50 to-white p-3.5 shadow-[0_7px_18px_rgb(14_165_233/16%)] min-[420px]:p-4 lg:p-5">
             <dt className="flex min-w-0 items-center gap-2 border-b border-primary/15 pb-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sky-100 text-blue-600">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/80 text-blue-600 shadow-sm lg:size-11">
                 <TrendingUp className="size-5.5" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
-                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl">
+                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl lg:text-[22px]">
                     Opción A
                   </strong>
-                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-sky-100 px-2 py-2 text-center text-[10px] font-bold leading-none text-blue-600 min-[360px]:text-[11px]">
+                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl border border-blue-300 bg-blue-100/95 px-2.5 py-2 text-center text-[11px] font-extrabold leading-none text-blue-700 shadow-md min-[360px]:text-xs lg:text-sm">
                     <Star
-                      className="size-3 shrink-0 fill-current"
+                      className="size-4 shrink-0 fill-current"
                       aria-hidden="true"
                     />
                     <span className="whitespace-nowrap">Termina antes</span>
                   </span>
                 </span>
-                <span className="block whitespace-nowrap text-base font-medium text-foreground/80">
+                <span className="block whitespace-nowrap text-base font-medium text-foreground/80 lg:text-lg">
                   Mantener cuota actual
                 </span>
               </span>
             </dt>
             <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-3 text-center">
               <span className="px-2">
-                <span className="block text-sm font-medium text-muted-foreground">
+                <span className="block text-sm font-medium text-muted-foreground lg:text-base">
                   Cuotas restantes
                 </span>
-                <strong className="mt-1.5 block text-4xl font-extrabold leading-none tracking-tight">
+                <strong className="mt-1.5 block text-4xl font-extrabold leading-none tracking-tight lg:text-[44px]">
                   {optionARemainingPayments}
                 </strong>
-                <span className="mt-1 block text-sm font-medium text-muted-foreground">
+                <span className="mt-1 block text-sm font-medium text-muted-foreground lg:text-base">
                   cuotas
                 </span>
               </span>
               <span className="min-w-0 px-2">
-                <span className="block text-sm font-medium text-muted-foreground">
+                <span className="block text-sm font-medium text-muted-foreground lg:text-base">
                   Cuota mensual
                 </span>
-                <strong className="mt-1.5 block truncate text-2xl font-extrabold leading-none tracking-tight text-primary">
+                <strong className="mt-1.5 block truncate text-2xl font-extrabold leading-none tracking-tight text-primary lg:text-[32px]">
                   {optionAPaymentUsd}
                 </strong>
-                <span className="mt-1.5 block truncate text-sm font-medium text-muted-foreground">
+                <span className="mt-1.5 block truncate text-sm font-medium text-muted-foreground lg:text-lg">
                   {optionAPaymentPen}
                 </span>
               </span>
             </dd>
           </div>
-          <div className="rounded-3xl border border-emerald-200 bg-card p-3.5 shadow-sm min-[420px]:p-4">
+          <div className="rounded-3xl border border-emerald-300 bg-gradient-to-br from-emerald-100 via-green-50 to-white p-3.5 shadow-[0_7px_18px_rgb(16_185_129/16%)] min-[420px]:p-4 lg:p-5">
             <dt className="flex min-w-0 items-center gap-2 border-b border-primary/15 pb-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/80 text-emerald-700 shadow-sm dark:bg-emerald-950/50 dark:text-emerald-300 lg:size-11">
                 <TrendingDown className="size-5.5" aria-hidden="true" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex min-w-0 items-center gap-2">
-                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl">
+                  <strong className="shrink-0 whitespace-nowrap text-lg font-extrabold leading-tight text-primary min-[380px]:text-xl lg:text-[22px]">
                     Opción B
                   </strong>
-                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl bg-emerald-100/80 px-2 py-2 text-center text-[10px] font-bold leading-none text-emerald-700 min-[360px]:text-[11px] dark:bg-emerald-950/50 dark:text-emerald-300">
-                    <Leaf className="size-3 shrink-0" aria-hidden="true" />
+                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-2xl border border-emerald-300 bg-emerald-100/95 px-2.5 py-2 text-center text-[11px] font-extrabold leading-none text-emerald-800 shadow-md min-[360px]:text-xs dark:bg-emerald-950/50 dark:text-emerald-300 lg:text-sm">
+                    <Leaf className="size-4 shrink-0" aria-hidden="true" />
                     <span className="whitespace-nowrap">Cuota más cómoda</span>
                   </span>
                 </span>
-                <span className="block whitespace-nowrap text-base font-medium text-foreground/80">
+                <span className="block whitespace-nowrap text-base font-medium text-foreground/80 lg:text-lg">
                   Reducir cuota
                 </span>
               </span>
             </dt>
             <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-3 text-center">
               <span className="px-2">
-                <span className="block text-sm font-medium text-muted-foreground">
+                <span className="block text-sm font-medium text-muted-foreground lg:text-base">
                   Cuotas restantes
                 </span>
-                <strong className="mt-1.5 block text-4xl font-extrabold leading-none tracking-tight">
+                <strong className="mt-1.5 block text-4xl font-extrabold leading-none tracking-tight lg:text-[44px]">
                   {optionBRemainingPayments}
                 </strong>
-                <span className="mt-1 block text-sm font-medium text-muted-foreground">
+                <span className="mt-1 block text-sm font-medium text-muted-foreground lg:text-base">
                   cuotas
                 </span>
               </span>
               <span className="min-w-0 px-2">
-                <span className="block text-sm font-medium text-muted-foreground">
+                <span className="block text-sm font-medium text-muted-foreground lg:text-base">
                   Cuota mensual
                 </span>
-                <strong className="mt-1.5 block truncate text-2xl font-extrabold leading-none tracking-tight text-primary">
+                <strong className="mt-1.5 block truncate text-2xl font-extrabold leading-none tracking-tight text-primary lg:text-[32px]">
                   {optionBPaymentUsd}
                 </strong>
-                <span className="mt-1.5 block truncate text-sm font-medium text-muted-foreground">
+                <span className="mt-1.5 block truncate text-sm font-medium text-muted-foreground lg:text-lg">
                   {optionBPaymentPen}
                 </span>
               </span>
