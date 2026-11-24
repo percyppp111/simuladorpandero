@@ -15,16 +15,13 @@ import {
   CalendarDays,
   Clock3,
   CreditCard,
+  Phone,
   ReceiptText,
   Trash2,
+  UserRound,
 } from 'lucide-react';
 
-import {
-  AuctionCapitalSection,
-  AuctionMonthSection,
-  AuctionOptionsSection,
-  AuctionPaymentsSection,
-} from '@/components/simulator/auction-sections';
+import { AuctionSimulationSection } from '@/components/simulator/auction-sections';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -185,6 +182,17 @@ function TimelineSegmentLabel({
 
 export default function Home() {
   const [certificateId, setCertificateId] = useState(CERTIFICATES[0].id);
+  const [advisorName, setAdvisorName] = useState('Percy Flores');
+  const [advisorPhone, setAdvisorPhone] = useState('963 845 676');
+  const [clientName, setClientName] = useState('Julian Robles Paredes');
+  const [proposalDate] = useState(() =>
+    new Intl.DateTimeFormat('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'America/Lima',
+    }).format(new Date()),
+  );
   const [exchangeRateInput, setExchangeRateInput] = useState(
     String(DEFAULT_EXCHANGE_RATE),
   );
@@ -584,7 +592,7 @@ export default function Home() {
         </header>
 
         <div className="grid gap-0 bg-transparent lg:grid-cols-12">
-          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(300px,22rem)_minmax(0,1fr)] lg:items-stretch lg:gap-4">
+          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(360px,25rem)_minmax(0,1fr)] lg:items-stretch lg:gap-4">
             <div className="grid gap-3 lg:self-start">
               <section
                 className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
@@ -712,103 +720,235 @@ export default function Home() {
               </section>
 
               <section
-                className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
-                aria-labelledby="certificateSummaryTitle"
+                className="rounded-2xl border border-sky-200/90 bg-white p-4 shadow-[0_8px_22px_rgb(15_73_122/10%)]"
+                aria-labelledby="proposalDataTitle"
               >
-                <div className="relative overflow-hidden bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-5 py-5 text-white">
-                  <div className="absolute -bottom-8 right-4 h-20 w-52 rotate-[-8deg] rounded-[50%] bg-sky-300/20" />
-                  <div className="relative min-w-0">
+                <h2
+                  id="proposalDataTitle"
+                  className="mb-3 border-l-4 border-sky-500 pl-3 text-lg font-extrabold tracking-tight text-slate-950"
+                >
+                  Datos de la propuesta
+                </h2>
+                <div className="grid gap-3">
+                  <label className="block" htmlFor="advisorName">
+                    <span className="mb-1 block text-xs font-medium text-slate-500">
+                      Asesor
+                    </span>
+                    <span className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2">
+                      <UserRound
+                        className="size-4.5 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      <input
+                        id="advisorName"
+                        name="advisorName"
+                        type="text"
+                        value={advisorName}
+                        onChange={(event) => setAdvisorName(event.target.value)}
+                        className="min-w-0 flex-1 bg-transparent text-base font-bold text-slate-950 outline-none"
+                      />
+                    </span>
+                  </label>
+                  <label className="block" htmlFor="advisorPhone">
+                    <span className="mb-1 block text-xs font-medium text-slate-500">
+                      Teléfono
+                    </span>
+                    <span className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2">
+                      <Phone
+                        className="size-4.5 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      <input
+                        id="advisorPhone"
+                        name="advisorPhone"
+                        type="tel"
+                        inputMode="tel"
+                        value={advisorPhone}
+                        onChange={(event) => setAdvisorPhone(event.target.value)}
+                        className="min-w-0 flex-1 bg-transparent text-base font-bold text-slate-950 outline-none"
+                      />
+                    </span>
+                  </label>
+                  <label className="block" htmlFor="clientName">
+                    <span className="mb-1 block text-xs font-medium text-slate-500">
+                      Propuesta para
+                    </span>
+                    <span className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2">
+                      <UserRound
+                        className="size-4.5 shrink-0 text-primary"
+                        aria-hidden="true"
+                      />
+                      <input
+                        id="clientName"
+                        name="clientName"
+                        type="text"
+                        value={clientName}
+                        onChange={(event) => setClientName(event.target.value)}
+                        className="min-w-0 flex-1 bg-transparent text-base font-bold text-slate-950 outline-none"
+                      />
+                    </span>
+                  </label>
+                </div>
+              </section>
+
+              <section
+                className="overflow-hidden border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
+                aria-labelledby="certificateSummaryTitle"
+                style={{
+                  containerType: 'inline-size',
+                  fontFamily: 'var(--font-geist-sans), Arial, Helvetica, sans-serif',
+                }}
+              >
+                <div className="bg-white px-[5.5cqw] pb-[2cqw] pt-[3.5cqw]">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-[3cqw]">
+                    <div className="relative min-h-[10.1cqw] min-w-0 pb-px pl-[3.4cqw]">
+                      <span
+                        className="absolute inset-y-0 left-0 w-[0.75cqw] -translate-y-[1cqw] rounded-full bg-[#08a7e8]"
+                        aria-hidden="true"
+                      />
+                      <strong className="block break-words text-[3.8cqw] font-bold leading-[1.1] text-slate-950">
+                        {advisorName || '—'}
+                      </strong>
+                      <span className="mt-[0.65cqw] block text-[3.75cqw] font-bold leading-none text-slate-900">
+                        {advisorPhone || '—'}
+                      </span>
+                    </div>
+                    <div className="relative -mt-[3.4cqw] h-[14.7cqw] w-[32cqw] shrink-0 translate-y-[1.8cqw]">
+                      <Image
+                        src="/assets/pandero-auto-logo.png"
+                        alt="Pandero AUTO"
+                        fill
+                        sizes="128px"
+                        className="object-contain object-right"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-[3cqw] px-[1.5cqw]">
+                    <div className="min-w-0">
+                      <span className="block text-[2.7cqw] font-normal leading-[1.1] text-slate-500">
+                        Propuesta para:
+                      </span>
+                      <strong className="mt-[0.4cqw] block break-words text-[3.15cqw] font-bold leading-[1.1] text-slate-950">
+                        {clientName || '—'}
+                      </strong>
+                    </div>
+                    <span className="whitespace-nowrap text-right text-[2.7cqw] font-normal leading-[1.1] text-slate-500">
+                      Fecha: {proposalDate}
+                    </span>
+                  </div>
+
+                  <div className="mt-[4.2cqw] min-w-0 text-center">
                     <h2
                       id="certificateSummaryTitle"
-                      className="text-2xl font-extrabold leading-tight tracking-tight lg:text-[23px]"
+                      className="whitespace-nowrap text-[7.2cqw] font-extrabold leading-none tracking-[-0.025em] text-slate-950"
                     >
                       Plan de Financiamiento
                     </h2>
-                    <span className="mt-1 block text-[15px] font-medium leading-tight text-white/90">
+                    <span className="mt-[1.25cqw] block whitespace-nowrap text-[4.3cqw] font-semibold leading-[1.2] text-slate-500">
                       Resumen Pandero 0KM y Seminuevos
                     </span>
+                    <span
+                      className="mx-auto mt-[2.25cqw] block h-[1cqw] w-[16cqw] rounded-full bg-[#036cfb]"
+                      aria-hidden="true"
+                    />
                   </div>
                 </div>
 
-                <dl className="px-3.5 pb-4 pt-3">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border-2 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50/90 px-4 py-3.5 shadow-[0_5px_14px_rgb(14_165_233/16%)]">
-                    <dt className="text-xl font-extrabold leading-tight text-slate-950">
+                <dl
+                  className="px-[5.5cqw] pb-[5.5cqw] pt-[4cqw]"
+                  style={{ containerType: 'inline-size' }}
+                >
+                  <div
+                    className="grid grid-cols-[51%_49%] items-center rounded-[5.5cqw] border-2 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50/90 px-[5.3cqw] py-[4.4cqw] shadow-[0_5px_14px_rgb(14_165_233/16%)]"
+                  >
+                    <dt className="whitespace-nowrap pl-[1cqw] text-[6.45cqw] font-extrabold leading-none text-slate-950">
                       Certificado
                     </dt>
-                    <dd className="min-w-0 text-right tabular-nums">
-                      <span className="block whitespace-nowrap text-2xl font-extrabold leading-none tracking-tight text-primary">
+                    <dd className="relative min-w-0 pl-[5.9cqw] text-right tabular-nums">
+                      <span
+                        className="absolute left-0 top-1/2 h-[13cqw] w-px -translate-y-1/2 bg-sky-400"
+                        aria-hidden="true"
+                      />
+                      <span
+                        className="block whitespace-nowrap text-[6.9cqw] font-extrabold leading-none tracking-tight text-[#0364e0]"
+                        style={{
+                          fontSize:
+                            formatUsd(selectedCertificate.amountUsd).length > 10
+                              ? '6.2cqw'
+                              : undefined,
+                        }}
+                      >
                         {formatUsd(selectedCertificate.amountUsd)}
                       </span>
-                      <span className="mt-1 block whitespace-nowrap text-[17px] font-semibold leading-none text-slate-600">
+                      <span className="mt-[2.1cqw] block whitespace-nowrap text-[5.2cqw] font-semibold leading-none text-slate-600">
                         {formatPen(toPen(selectedCertificate.amountUsd))}
                       </span>
                     </dd>
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-2.5 border-b border-sky-100 py-2">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
-                        <ReceiptText className="size-4.5" aria-hidden="true" />
+                  <div className="mt-[2.2cqw] flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 py-[2.3cqw]">
+                    <div className="flex min-w-0 items-center gap-[3cqw]">
+                      <span className="flex size-[9.5cqw] shrink-0 items-center justify-center rounded-[4.5cqw] bg-sky-50 text-primary">
+                        <ReceiptText className="size-[5cqw]" aria-hidden="true" />
                       </span>
-                      <dt className="text-base font-medium text-slate-800">
+                      <dt className="text-[4.8cqw] font-normal leading-tight text-slate-800">
                         C. de Inscripción
                       </dt>
                     </div>
-                    <dd className="flex shrink-0 flex-col items-end text-right text-xl font-extrabold tracking-tight text-slate-950 tabular-nums lg:flex-row lg:items-baseline lg:gap-0.5">
+                    <dd className="flex shrink-0 flex-col items-end text-right text-[6.4cqw] font-extrabold leading-none tracking-tight text-slate-950 tabular-nums">
                       <span className="whitespace-nowrap">
                         {formatUsd(registrationFee)}
                       </span>
-                      <span className="mt-0.5 whitespace-nowrap text-[13px] font-medium text-slate-500 lg:mt-0">
+                      <span className="mt-[1.4cqw] whitespace-nowrap text-[3.8cqw] font-medium leading-none text-slate-500">
                         (4% + IGV)
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-2.5 border-b border-sky-100 py-2">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
-                        <CalendarDays className="size-4.5" aria-hidden="true" />
+                  <div className="flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 py-[2.3cqw]">
+                    <div className="flex min-w-0 items-center gap-[3cqw]">
+                      <span className="flex size-[9.5cqw] shrink-0 items-center justify-center rounded-[4.5cqw] bg-sky-50 text-primary">
+                        <CalendarDays className="size-[5cqw]" aria-hidden="true" />
                       </span>
-                      <dt className="text-base font-medium text-slate-800">
+                      <dt className="text-[4.8cqw] font-normal leading-tight text-slate-800">
                         Cuota mensual
                       </dt>
                     </div>
-                    <dd className="flex shrink-0 flex-col items-end text-right text-xl font-extrabold tracking-tight text-sky-600 tabular-nums lg:flex-row lg:items-baseline lg:gap-0.5">
+                    <dd className="flex shrink-0 flex-col items-end text-right text-[6.4cqw] font-extrabold leading-none tracking-tight text-sky-600 tabular-nums">
                       <span className="whitespace-nowrap">
                         {formatUsd(monthlyPayment)}
                       </span>
-                      <span className="mt-0.5 whitespace-nowrap text-[13px] font-medium text-slate-500 lg:mt-0">
+                      <span className="mt-[1.4cqw] whitespace-nowrap text-[3.8cqw] font-medium leading-none text-slate-500">
                         {formatPen(toPen(monthlyPayment))}
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-2.5 border-b border-sky-100 py-2">
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-primary">
-                        <Clock3 className="size-4.5" aria-hidden="true" />
+                  <div className="flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 py-[2.3cqw]">
+                    <div className="flex min-w-0 items-center gap-[3cqw]">
+                      <span className="flex size-[9.5cqw] shrink-0 items-center justify-center rounded-[4.5cqw] bg-sky-50 text-primary">
+                        <Clock3 className="size-[5cqw]" aria-hidden="true" />
                       </span>
-                      <dt className="text-base font-medium text-slate-800">
+                      <dt className="text-[4.8cqw] font-normal leading-tight text-slate-800">
                         Plazo
                       </dt>
                     </div>
-                    <dd className="whitespace-nowrap text-xl font-extrabold tracking-tight text-slate-950 tabular-nums">
+                    <dd className="whitespace-nowrap text-[6.4cqw] font-extrabold leading-none tracking-tight text-slate-950 tabular-nums">
                       {termMonths} meses
                     </dd>
                   </div>
-                  <div className="relative mt-3 overflow-hidden rounded-2xl bg-gradient-to-r from-sky-500 via-blue-600 to-blue-800 px-3.5 py-3.5 text-white shadow-md">
-                    <span className="absolute inset-y-0 left-[58%] w-16 skew-x-[-28deg] bg-sky-400/25" />
-                    <div className="relative flex items-center justify-between gap-3">
-                      <dt className="min-w-0">
-                        <span className="block text-xl font-extrabold leading-tight">
+                  <div className="mt-[3.3cqw] overflow-hidden rounded-[5.5cqw] bg-[linear-gradient(105deg,#22a8f2_0%,#1488ea_52%,#0b62da_100%)] px-[4.7cqw] py-[4.5cqw] text-white shadow-md">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-[3cqw]">
+                      <dt className="min-w-0 pr-1">
+                        <span className="block text-[5.5cqw] font-extrabold leading-tight">
                           Total para ingreso
                         </span>
-                        <span className="mt-1 block text-xs font-medium leading-tight text-white/85">
+                        <span className="mt-[1.4cqw] block whitespace-nowrap text-[3cqw] font-medium leading-tight text-white/90">
                           (C. de Inscripción + 1ra Cuota)
                         </span>
                       </dt>
-                      <dd className="text-right font-bold tracking-tight tabular-nums">
-                        <span className="block whitespace-nowrap text-[26px] font-extrabold leading-none">
+                      <dd className="flex self-stretch flex-col justify-center border-l border-white/70 pl-[4cqw] text-right font-bold tracking-tight tabular-nums">
+                        <span className="block whitespace-nowrap text-[7.2cqw] font-extrabold leading-none">
                           {formatUsd(totalEntry)}
                         </span>
-                        <span className="mt-1 block whitespace-nowrap text-[17px] font-medium leading-none text-white/90">
+                        <span className="mt-[1.8cqw] block whitespace-nowrap text-[4.8cqw] font-medium leading-none text-white/90">
                           {formatPen(toPen(totalEntry))}
                         </span>
                       </dd>
@@ -851,26 +991,24 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col gap-3 bg-transparent lg:self-start">
-              <div className="order-1 overflow-hidden rounded-3xl border border-primary/15 bg-card shadow-sm">
-                <div className="grid gap-0">
-                  <AuctionMonthSection
+                  <AuctionSimulationSection
+                    advisorName={advisorName}
+                    advisorPhone={advisorPhone}
                     auctionMonth={auctionMonth}
                     onMonthChange={updateAuctionMonth}
-                  />
-
-                  <AuctionPaymentsSection
                     auctionPayments={auctionPayments}
                     onPaymentsChange={updateAuctionPayments}
-                  />
-
-                  <AuctionCapitalSection
-                    auctionPayments={auctionPayments}
                     auctionAmountUsd={formatUsd(auctionAmount)}
                     auctionAmountPen={formatPen(toPen(auctionAmount))}
+                    paidPayments={paidPayments}
+                    remainingPayments={remainingPayments}
+                    optionARemainingPayments={proratedRemainingPayments}
                     optionAPaymentUsd={formatUsd(monthlyPayment)}
+                    optionAPaymentPen={formatPen(toPen(monthlyPayment))}
+                    optionBRemainingPayments={prorationRemainingPayments}
+                    optionBPaymentUsd={formatUsd(proratedPayment)}
+                    optionBPaymentPen={formatPen(toPen(proratedPayment))}
                   />
-                </div>
-              </div>
 
               <section
                 className="relative order-3 overflow-hidden rounded-3xl border border-cyan-200/80 bg-[radial-gradient(circle_at_50%_22%,rgba(56,189,248,0.5),transparent_34%),linear-gradient(180deg,#0f3ca8_0%,#075fd4_48%,#e0f2fe_100%)] px-3.5 pb-3.5 pt-0 shadow-[0_12px_28px_rgba(15,63,150,0.28)] ring-1 ring-white/40 min-[420px]:px-4 min-[420px]:pb-4"
@@ -1077,16 +1215,6 @@ export default function Home() {
                 </figure>
               </section>
 
-              <div className="order-2">
-                <AuctionOptionsSection
-                  optionARemainingPayments={proratedRemainingPayments}
-                  optionAPaymentUsd={formatUsd(monthlyPayment)}
-                  optionAPaymentPen={formatPen(toPen(monthlyPayment))}
-                  optionBRemainingPayments={prorationRemainingPayments}
-                  optionBPaymentUsd={formatUsd(proratedPayment)}
-                  optionBPaymentPen={formatPen(toPen(proratedPayment))}
-                />
-              </div>
             </div>
           </div>
 
