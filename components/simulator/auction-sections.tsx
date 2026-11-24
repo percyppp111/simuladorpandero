@@ -1,50 +1,37 @@
+import Image from 'next/image';
 import {
-  Banknote,
   CalendarDays,
+  ChartNoAxesColumnIncreasing,
   ChevronDown,
-  CircleDollarSign,
+  Clock3,
+  Coins,
   Flag,
-  Info,
   Leaf,
   Star,
-  TrendingDown,
-  TrendingUp,
 } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { MIN_SIMULATOR_VALUE } from '@/lib/simulator';
 
-const AUCTION_MONTH_MAX = 18;
-const AUCTION_MONTH_PRESETS = [1, 3, 6, 9, 12, 18] as const;
-const AUCTION_PAYMENTS_MAX = 35;
-const AUCTION_PAYMENT_PRESETS = [5, 10, 15, 20, 25, 30] as const;
 const AUCTION_MONTH_OPTIONS = Array.from(
-  { length: AUCTION_MONTH_MAX },
+  { length: 18 },
   (_, index) => index + MIN_SIMULATOR_VALUE,
 );
 const AUCTION_PAYMENT_OPTIONS = Array.from(
-  { length: AUCTION_PAYMENTS_MAX },
+  { length: 35 },
   (_, index) => index + MIN_SIMULATOR_VALUE,
 );
 
-type AuctionMonthSectionProps = {
+type AuctionSimulationSectionProps = {
+  advisorName: string;
+  advisorPhone: string;
   auctionMonth: number;
   onMonthChange: (month: number) => void;
-};
-
-type AuctionPaymentsSectionProps = {
   auctionPayments: number;
   onPaymentsChange: (payments: number) => void;
-};
-
-type AuctionCapitalSectionProps = {
-  auctionPayments: number;
   auctionAmountUsd: string;
   auctionAmountPen: string;
-  optionAPaymentUsd: string;
-};
-
-type AuctionOptionsSectionProps = {
+  paidPayments: number;
+  remainingPayments: number;
   optionARemainingPayments: number;
   optionAPaymentUsd: string;
   optionAPaymentPen: string;
@@ -53,329 +40,340 @@ type AuctionOptionsSectionProps = {
   optionBPaymentPen: string;
 };
 
-export function AuctionMonthSection({
+export function AuctionSimulationSection({
+  advisorName,
+  advisorPhone,
   auctionMonth,
   onMonthChange,
-}: AuctionMonthSectionProps) {
-  return (
-    <section
-      className="bg-transparent"
-      aria-labelledby="auctionMonthTitle"
-    >
-      <div className="h-full border-b border-primary/10 bg-card p-3 min-[420px]:p-4">
-        <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <div className="flex min-w-0 items-center gap-1">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/[0.07] text-primary">
-              <CalendarDays className="size-4" aria-hidden="true" />
-            </span>
-            <div className="grid min-w-0 content-start gap-0.5 pt-px">
-              <h2
-                id="auctionMonthTitle"
-                className="whitespace-nowrap text-sm font-extrabold leading-tight tracking-tight min-[360px]:text-base"
-              >
-                Mes de adjudicación
-              </h2>
-              <p className="text-xs font-medium leading-tight text-muted-foreground">
-                Decide cuándo avanzar.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 justify-self-end">
-            <label className="sr-only" htmlFor="auctionMonth">
-              Seleccionar mes de adjudicación
-            </label>
-            <span className="relative block">
-              <select
-                id="auctionMonth"
-                name="auctionMonth"
-                value={auctionMonth}
-                onChange={(event) => onMonthChange(Number(event.target.value))}
-                className="h-10 w-[5.75rem] appearance-none rounded-xl border border-primary/15 bg-primary/[0.08] pl-2.5 pr-7 text-sm font-extrabold text-primary outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/20"
-              >
-                {AUCTION_MONTH_OPTIONS.map((month) => (
-                  <option key={month} value={month}>
-                    Mes {month}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-primary"
-                aria-hidden="true"
-              />
-            </span>
-          </div>
-        </div>
-        <div className="grid grid-cols-6 gap-1">
-          {AUCTION_MONTH_PRESETS.map((month) => (
-            <Button
-              key={month}
-              type="button"
-              size="sm"
-              variant={auctionMonth === month ? 'default' : 'outline'}
-              className={`h-9 min-w-0 rounded-xl px-1 text-sm font-bold shadow-none transition-colors duration-150 active:translate-y-0 ${
-                auctionMonth === month
-                  ? ''
-                  : 'border-border/80 bg-background/80 hover:bg-muted'
-              }`}
-              onClick={() => onMonthChange(month)}
-              aria-pressed={auctionMonth === month}
-            >
-              {month}
-            </Button>
-          ))}
-        </div>
-        {auctionMonth > MIN_SIMULATOR_VALUE && (
-          <p className="mt-1.5 flex items-center gap-1.5 border-t border-primary/10 pt-1.5 text-[10px] leading-snug text-muted-foreground">
-            <Info className="size-3 shrink-0" aria-hidden="true" />
-            Chance de adjudicar por sorteo antes del remate
-          </p>
-        )}
-      </div>
-    </section>
-  );
-}
-
-export function AuctionPaymentsSection({
   auctionPayments,
   onPaymentsChange,
-}: AuctionPaymentsSectionProps) {
-  return (
-    <section
-      className="bg-transparent"
-      aria-labelledby="auctionPaymentsTitle"
-    >
-      <div className="h-full border-b border-primary/10 bg-card p-3 min-[420px]:p-4">
-        <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <div className="flex min-w-0 items-center gap-1">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/[0.07] text-primary">
-              <CircleDollarSign className="size-4.5" aria-hidden="true" />
-            </span>
-            <div className="grid min-w-0 content-start gap-0.5 pt-px">
-              <h2
-                id="auctionPaymentsTitle"
-                className="whitespace-nowrap text-sm font-extrabold leading-tight tracking-tight min-[360px]:text-base"
-              >
-                Cuotas a adelantar
-              </h2>
-              <p className="text-xs font-medium leading-tight text-muted-foreground">
-                Tú defines el monto
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 justify-self-end">
-            <label className="sr-only" htmlFor="auctionPayments">
-              Seleccionar cuotas a adelantar
-            </label>
-            <span className="relative block">
-              <select
-                id="auctionPayments"
-                name="auctionPayments"
-                value={auctionPayments}
-                onChange={(event) =>
-                  onPaymentsChange(Number(event.target.value))
-                }
-                className="h-10 w-28 appearance-none rounded-xl border border-primary/15 bg-primary/[0.08] pl-2.5 pr-7 text-sm font-extrabold text-primary outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/20"
-              >
-                {AUCTION_PAYMENT_OPTIONS.map((payments) => (
-                  <option key={payments} value={payments}>
-                    {payments} Cuotas
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-primary"
-                aria-hidden="true"
-              />
-            </span>
-          </div>
-        </div>
-        <div className="grid grid-cols-6 gap-1">
-          {AUCTION_PAYMENT_PRESETS.map((payments) => (
-            <Button
-              key={payments}
-              type="button"
-              size="sm"
-              variant={auctionPayments === payments ? 'default' : 'outline'}
-              className={`h-9 min-w-0 rounded-xl px-1 text-sm font-bold shadow-none transition-colors duration-150 active:translate-y-0 ${
-                auctionPayments === payments
-                  ? ''
-                  : 'border-border/80 bg-background/80 hover:bg-muted'
-              }`}
-              onClick={() => onPaymentsChange(payments)}
-              aria-pressed={auctionPayments === payments}
-            >
-              {payments}
-            </Button>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function AuctionCapitalSection({
-  auctionPayments,
   auctionAmountUsd,
   auctionAmountPen,
-  optionAPaymentUsd,
-}: AuctionCapitalSectionProps) {
-  return (
-    <section
-      className="bg-card px-3 pb-3 pt-3 min-[420px]:px-4 min-[420px]:pb-4 min-[420px]:pt-4"
-      aria-labelledby="auctionCapitalTitle"
-    >
-      <div className="rounded-2xl border border-cyan-300 bg-gradient-to-br from-sky-500 via-primary to-blue-800 p-3.5 text-white shadow-md min-[420px]:p-4">
-        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-2.5 max-[389px]:gap-x-1.5">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-white/15 text-white max-[389px]:size-9">
-            <Banknote className="size-5" aria-hidden="true" />
-          </span>
-          <span className="min-w-0">
-            <h2
-              id="auctionCapitalTitle"
-              className="whitespace-nowrap text-lg font-extrabold tracking-tight text-white max-[389px]:text-[17px] min-[420px]:text-xl"
-            >
-              Capital de Remate
-            </h2>
-            <span className="mt-1 block whitespace-nowrap text-left text-sm font-medium not-italic leading-none text-white/90 max-[389px]:text-xs min-[420px]:text-[15px]">
-              {auctionPayments} cuotas × US${' '}
-              {optionAPaymentUsd.replace(/^\$/, '')}
-            </span>
-          </span>
-          <span className="min-w-0 text-right">
-            <strong className="block max-w-full whitespace-nowrap text-xl font-extrabold leading-none tracking-tight text-white tabular-nums max-[389px]:text-lg min-[420px]:text-2xl">
-              {auctionAmountUsd}
-            </strong>
-            <span className="mt-1 block max-w-full whitespace-nowrap text-sm font-medium leading-none text-white/90 tabular-nums max-[389px]:text-xs">
-              {auctionAmountPen}
-            </span>
-          </span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function AuctionOptionsSection({
+  paidPayments,
+  remainingPayments,
   optionARemainingPayments,
   optionAPaymentUsd,
   optionAPaymentPen,
   optionBRemainingPayments,
   optionBPaymentUsd,
   optionBPaymentPen,
-}: AuctionOptionsSectionProps) {
+}: AuctionSimulationSectionProps) {
+  const controls = [
+    {
+      id: 'auctionPayments',
+      label: 'Cuotas a adelantar',
+      value: auctionPayments,
+      options: AUCTION_PAYMENT_OPTIONS,
+      onChange: onPaymentsChange,
+      Icon: CalendarDays,
+      optionLabel: (value: number) => `${value} cuotas`,
+    },
+    {
+      id: 'auctionMonth',
+      label: 'Mes de remate',
+      value: auctionMonth,
+      options: AUCTION_MONTH_OPTIONS,
+      onChange: onMonthChange,
+      Icon: Flag,
+      optionLabel: (value: number) => `Mes ${value}`,
+    },
+  ];
+  const options = [
+    {
+      name: 'A',
+      label: 'Termina antes',
+      remaining: optionARemainingPayments,
+      usd: optionAPaymentUsd,
+      pen: optionAPaymentPen,
+      Icon: Star,
+      green: false,
+    },
+    {
+      name: 'B',
+      label: 'Cuota más cómoda',
+      remaining: optionBRemainingPayments,
+      usd: optionBPaymentUsd,
+      pen: optionBPaymentPen,
+      Icon: Leaf,
+      green: true,
+    },
+  ];
+
   return (
-    <section aria-labelledby="auctionOptionsTitle">
-      <div className="space-y-3 rounded-3xl border border-primary/15 bg-card p-3.5 shadow-sm min-[420px]:p-4">
-        <div>
-          <div className="border-b border-primary/15 px-1 pb-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h3
-                  id="auctionOptionsTitle"
-                  className="max-w-[28rem] text-xl font-extrabold leading-tight tracking-tight text-primary min-[420px]:text-2xl lg:text-[28px]"
-                >
-                  Adapta tus últimas cuotas a tu objetivo
-                </h3>
-                <span
-                  className="mt-1 block h-0.5 w-36 rounded-full bg-amber-400"
-                  aria-hidden="true"
-                />
-              </div>
-              <span className="flex size-11 shrink-0 -rotate-6 items-center justify-center rounded-full bg-amber-100 text-primary">
-                <Flag className="size-6 fill-current" aria-hidden="true" />
-              </span>
-            </div>
+    <section
+      aria-labelledby="auctionSimulationTitle"
+      className="order-1 min-w-0 border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
+      style={{
+        containerType: 'inline-size',
+        fontFamily: 'var(--font-geist-sans), Arial, Helvetica, sans-serif',
+      }}
+    >
+      <header className="px-[5.5cqw] pt-[3.5cqw]">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-[3cqw]">
+          <div className="relative min-h-[10.1cqw] min-w-0 pb-px pl-[3.4cqw]">
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-0 left-0 w-[0.75cqw] -translate-y-[1cqw] rounded-full bg-[#08a7e8]"
+            />
+            <strong className="block break-words text-[3.8cqw] font-bold leading-[1.1] text-slate-950">
+              {advisorName || '—'}
+            </strong>
+            <span className="mt-[0.65cqw] block text-[3.75cqw] font-bold leading-none text-slate-900">
+              {advisorPhone || '—'}
+            </span>
+          </div>
+          <div className="relative -mt-[3.4cqw] h-[14.7cqw] w-[32cqw] shrink-0 translate-y-[1.8cqw]">
+            <Image
+              src="/assets/pandero-auto-logo.png"
+              alt="Pandero AUTO"
+              fill
+              sizes="128px"
+              className="object-contain object-right"
+            />
           </div>
         </div>
-        <dl className="space-y-1.5">
-          <div className="rounded-3xl border border-sky-300 bg-gradient-to-br from-sky-100 via-blue-50 to-white p-2.5 shadow-[0_7px_18px_rgb(14_165_233/16%)] min-[420px]:p-3 lg:p-3.5">
-            <dt className="flex min-w-0 items-center gap-1.5 border-b border-primary/15 pb-2">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-blue-600 shadow-sm lg:size-10">
-                <TrendingUp className="size-5" aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex min-w-0 items-center gap-2">
-                  <strong className="shrink-0 whitespace-nowrap text-base font-extrabold leading-tight text-primary min-[380px]:text-lg lg:text-xl">
-                    Opción A
-                  </strong>
-                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl border border-blue-300 bg-blue-100/95 px-2 py-1.5 text-center text-[11px] font-extrabold leading-none text-blue-700 shadow-md min-[360px]:text-xs">
-                    <Star
-                      className="size-4 shrink-0 fill-current"
+        <h2
+          id="auctionSimulationTitle"
+          className="mt-[2.2cqw] text-center text-[6.8cqw] font-extrabold leading-[1.12] tracking-[-0.035em] text-black"
+        >
+          Remate y Últimas Cuotas
+        </h2>
+        <p className="mt-[0.6cqw] text-center text-[3.5cqw] font-medium leading-tight tracking-[-0.025em] text-[#737fa9]">
+          ¡Acorta tu plazo o reduce tu cuota!
+        </p>
+        <span
+          aria-hidden="true"
+          className="mx-auto mb-[2.6cqw] mt-[2cqw] block h-[1.2cqw] w-[19cqw] rounded-full bg-[#0454ff]"
+        />
+      </header>
+
+      <div className="px-[3.2cqw] pb-[4.2cqw]">
+        <div className="grid grid-cols-2 gap-[1.6cqw]">
+          <div className="grid gap-[1.6cqw]">
+            {controls.map(
+              ({ id, label, value, options, onChange, Icon, optionLabel }) => (
+                <div
+                  key={id}
+                  className="flex items-center gap-[1.5cqw] rounded-[2.4cqw] bg-gradient-to-br from-[#e7f3ff] to-[#deecfa] p-[2cqw]"
+                >
+                  <span className="flex size-[9.5cqw] shrink-0 items-center justify-center rounded-full border border-white bg-gradient-to-br from-white/70 to-blue-200/50 text-[#034aff]">
+                    <Icon
                       aria-hidden="true"
+                      className={`size-[5.4cqw] ${id === 'auctionMonth' ? 'fill-sky-400' : ''}`}
                     />
-                    <span className="whitespace-nowrap">Termina antes</span>
                   </span>
-                </span>
-              </span>
-            </dt>
-            <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-2 text-center">
-              <span className="px-2">
-                <span className="block text-xs font-medium text-muted-foreground lg:text-sm">
-                  Cuotas restantes
-                </span>
-                <strong className="mt-1 block text-3xl font-extrabold leading-none tracking-tight lg:text-[38px]">
-                  {optionARemainingPayments}
-                </strong>
-                <span className="mt-0.5 block text-xs font-medium text-muted-foreground lg:text-sm">
-                  cuotas
-                </span>
-              </span>
-              <span className="min-w-0 px-2">
-                <span className="block text-xs font-medium text-muted-foreground lg:text-sm">
-                  Cuota mensual
-                </span>
-                <strong className="mt-1 block truncate text-2xl font-extrabold leading-none tracking-tight text-primary lg:text-[28px]">
-                  {optionAPaymentUsd}
-                </strong>
-                <span className="mt-1 block truncate text-xs font-medium text-muted-foreground lg:text-base">
-                  {optionAPaymentPen}
-                </span>
-              </span>
-            </dd>
+                  <div className="min-w-0 flex-1">
+                    <label
+                      htmlFor={id}
+                      className="mb-[1cqw] block whitespace-nowrap text-[3.2cqw] font-extrabold leading-tight tracking-[-0.045em] text-black"
+                    >
+                      {label}
+                    </label>
+                    <div className="relative">
+                      <select
+                        id={id}
+                        name={id}
+                        value={value}
+                        onChange={(event) =>
+                          onChange(Number(event.target.value))
+                        }
+                        className="h-[5.4cqw] min-h-7 w-full appearance-none rounded-[1.2cqw] border border-blue-300 bg-white pl-[1.6cqw] pr-[4cqw] text-[3.2cqw] font-medium text-black shadow-sm focus-visible:outline-2 focus-visible:outline-blue-600"
+                      >
+                        {options.map((option) => (
+                          <option key={option} value={option}>
+                            {optionLabel(option)}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown
+                        aria-hidden="true"
+                        className="pointer-events-none absolute right-[1.4cqw] top-1/2 size-[3cqw] -translate-y-1/2 text-[#38375f]"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ),
+            )}
           </div>
-          <div className="rounded-3xl border border-emerald-300 bg-gradient-to-br from-emerald-100 via-green-50 to-white p-2.5 shadow-[0_7px_18px_rgb(16_185_129/16%)] min-[420px]:p-3 lg:p-3.5">
-            <dt className="flex min-w-0 items-center gap-1.5 border-b border-primary/15 pb-2">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white/80 text-emerald-700 shadow-sm dark:bg-emerald-950/50 dark:text-emerald-300 lg:size-10">
-                <TrendingDown className="size-5" aria-hidden="true" />
+          <section
+            aria-labelledby="auctionCapitalTitle"
+            className="flex flex-col justify-center rounded-[3.2cqw] border-2 border-cyan-400 bg-gradient-to-br from-[#f2fbff] to-[#cfe8fb] px-[2.2cqw] py-[1.8cqw] text-center shadow-[0_5px_8px_#00bfff20]"
+          >
+            <div className="flex items-center justify-center gap-[1.4cqw] border-b-2 border-cyan-400 pb-[1cqw]">
+              <span className="flex size-[9.5cqw] shrink-0 items-center justify-center rounded-full border border-white bg-sky-100 text-[#034aff]">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 32 36"
+                  className="size-[6cqw]"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 9 9 4Q8 0 12 2L16 4 20 2Q24 0 23 4L20 9M12 9H20C23 12 29 17 29 24C29 38 3 38 3 24C3 17 9 12 12 9Z" />
+                  <path d="M20 18C18 15 12 16 12 19C12 23 20 21 20 25C20 29 13 29 12 26M16 14V31" />
+                </svg>
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="flex min-w-0 items-center gap-2">
-                  <strong className="shrink-0 whitespace-nowrap text-base font-extrabold leading-tight text-primary min-[380px]:text-lg lg:text-xl">
-                    Opción B
-                  </strong>
-                  <span className="inline-flex w-fit max-w-full shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-2xl border border-emerald-300 bg-emerald-100/95 px-2 py-1.5 text-center text-[11px] font-extrabold leading-none text-emerald-800 shadow-md min-[360px]:text-xs dark:bg-emerald-950/50 dark:text-emerald-300">
-                    <Leaf className="size-4 shrink-0" aria-hidden="true" />
-                    <span className="whitespace-nowrap">Cuota más cómoda</span>
+              <h3
+                id="auctionCapitalTitle"
+                className="whitespace-nowrap text-[3.9cqw] font-extrabold tracking-[-0.045em] text-black"
+              >
+                Capital de Remate
+              </h3>
+            </div>
+            <strong
+              className={`mt-[1.4cqw] block whitespace-nowrap font-extrabold leading-tight tracking-[-0.045em] text-[#003dce] ${auctionAmountUsd.length > 9 ? 'text-[6.5cqw]' : 'text-[8cqw]'}`}
+            >
+              {auctionAmountUsd}
+            </strong>
+            <span className="block whitespace-nowrap text-[5.2cqw] font-semibold leading-tight tracking-[-0.03em] text-[#333554]">
+              {auctionAmountPen}
+            </span>
+          </section>
+        </div>
+
+        <div className="mt-[3cqw]" aria-labelledby="auctionOptionsTitle">
+          <div className="relative overflow-hidden rounded-[1.8cqw] bg-gradient-to-r from-[#0454f5] via-[#052ec7] to-[#0744db] px-[3.6cqw] py-[1.8cqw] text-white shadow-sm">
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-0 right-0 w-[16cqw] bg-gradient-to-r from-[#0878ff] to-[#3fa7ff] [clip-path:polygon(42%_0,100%_0,100%_100%,0_100%)]"
+            />
+            <h3
+              id="auctionOptionsTitle"
+              className="relative flex items-center gap-[2.2cqw] whitespace-nowrap text-[4.8cqw] font-extrabold leading-tight tracking-[-0.03em]"
+            >
+              <ChartNoAxesColumnIncreasing
+                aria-hidden="true"
+                className="size-[6.3cqw] shrink-0 border-r border-white/80 pr-[1.5cqw]"
+              />
+              Resumen de tu simulación
+            </h3>
+          </div>
+
+          <dl className="mt-[2.2cqw] grid grid-cols-3 gap-[1.7cqw]">
+            {[
+              {
+                label: 'Pagadas',
+                value: paidPayments,
+                Icon: Coins,
+                tone: 'from-[#f2f9ff] to-[#dceeff]',
+                border: 'border-blue-200',
+                icon: 'text-blue-600',
+                accent: 'bg-blue-600',
+                divider: 'border-blue-500',
+              },
+              {
+                label: 'Adelantadas',
+                value: auctionPayments,
+                Icon: CalendarDays,
+                tone: 'from-[#fffaf0] to-[#fff0c9]',
+                border: 'border-amber-200',
+                icon: 'text-orange-500',
+                accent: 'bg-orange-500',
+                divider: 'border-orange-400',
+              },
+              {
+                label: 'Restantes',
+                value: remainingPayments,
+                Icon: Clock3,
+                tone: 'from-[#f4fcf8] to-[#e7f7ef]',
+                border: 'border-emerald-200',
+                icon: 'text-green-700',
+                accent: 'bg-green-700',
+                divider: 'border-green-600',
+              },
+            ].map(
+              ({ label, value, Icon, tone, border, icon, accent, divider }) => (
+                <div
+                  key={label}
+                  className={`relative grid min-w-0 grid-cols-[auto_1fr] items-center gap-[1.2cqw] overflow-hidden rounded-[2.1cqw] border bg-gradient-to-br ${border} ${tone} px-[1.4cqw] py-[2cqw] shadow-[0_4px_8px_rgb(15_73_122/12%)]`}
+                >
+                  <span
+                    className={`flex size-[7cqw] shrink-0 items-center justify-center rounded-full bg-white shadow-md ${icon}`}
+                  >
+                    <Icon aria-hidden="true" className="size-[4.2cqw]" />
                   </span>
-                </span>
-              </span>
-            </dt>
-            <dd className="grid grid-cols-2 divide-x divide-primary/15 pt-2 text-center">
-              <span className="px-2">
-                <span className="block text-xs font-medium text-muted-foreground lg:text-sm">
-                  Cuotas restantes
-                </span>
-                <strong className="mt-1 block text-3xl font-extrabold leading-none tracking-tight lg:text-[38px]">
-                  {optionBRemainingPayments}
-                </strong>
-                <span className="mt-0.5 block text-xs font-medium text-muted-foreground lg:text-sm">
-                  cuotas
-                </span>
-              </span>
-              <span className="min-w-0 px-2">
-                <span className="block text-xs font-medium text-muted-foreground lg:text-sm">
-                  Cuota mensual
-                </span>
-                <strong className="mt-1 block truncate text-2xl font-extrabold leading-none tracking-tight text-primary lg:text-[28px]">
-                  {optionBPaymentUsd}
-                </strong>
-                <span className="mt-1 block truncate text-xs font-medium text-muted-foreground lg:text-base">
-                  {optionBPaymentPen}
-                </span>
-              </span>
-            </dd>
-          </div>
-        </dl>
+                  <div
+                    className={`min-w-0 border-l ${divider} pl-[1.2cqw] text-center`}
+                  >
+                    <dt className="whitespace-nowrap text-[2.4cqw] font-bold leading-tight tracking-[-0.04em] text-[#12125a]">
+                      {label}
+                    </dt>
+                    <dd>
+                      <strong className="block text-[6.4cqw] font-extrabold leading-none text-black">
+                        {value}
+                      </strong>
+                      <span className="block text-[2.8cqw] font-semibold leading-tight text-[#17175c]">
+                        cuotas
+                      </span>
+                    </dd>
+                  </div>
+                  <span
+                    aria-hidden="true"
+                    className={`absolute inset-x-0 bottom-0 h-[0.8cqw] ${accent}`}
+                  />
+                </div>
+              ),
+            )}
+          </dl>
+
+          <dl className="mt-[3cqw] space-y-[2.8cqw] pb-[1.2cqw]">
+            {options.map(
+              ({ name, label, remaining, usd, pen, Icon, green }) => (
+                <div
+                  key={name}
+                  className={`grid grid-cols-[1.25fr_1fr_1.04fr] items-center rounded-[2.6cqw] border-2 px-[1.8cqw] py-[3cqw] ${green ? 'border-green-500 bg-gradient-to-br from-[#effcf3] to-[#cdf4e4]' : 'border-sky-400 bg-gradient-to-br from-[#eff9ff] to-[#cbe5fc]'}`}
+                >
+                  <dt className="flex min-w-0 items-center gap-[1.2cqw]">
+                    <span
+                      className={`flex size-[7.6cqw] shrink-0 items-center justify-center rounded-full bg-white shadow-md ${green ? 'text-green-700' : 'text-[#004bff]'}`}
+                    >
+                      <Icon
+                        aria-hidden="true"
+                        className={`size-[4.5cqw] ${green ? '' : 'fill-current'}`}
+                      />
+                    </span>
+                    <span className="min-w-0">
+                      <strong
+                        className={`block whitespace-nowrap text-[4.6cqw] font-extrabold leading-tight tracking-[-0.04em] ${green ? 'text-green-800' : 'text-[#0718db]'}`}
+                      >
+                        Opción {name}
+                      </strong>
+                      <span
+                        className={`mt-[0.7cqw] block whitespace-nowrap rounded-full border px-[1.1cqw] py-[0.5cqw] text-center font-bold leading-tight tracking-[-0.035em] ${green ? 'border-emerald-300 bg-emerald-100 text-[2.45cqw] text-green-800' : 'border-sky-300 bg-sky-100 text-[2.8cqw] text-blue-700'}`}
+                      >
+                        {label}
+                      </span>
+                    </span>
+                  </dt>
+                  <dd
+                    className={`border-x text-center ${green ? 'border-emerald-600' : 'border-blue-500'}`}
+                  >
+                    <strong className="block text-[6.8cqw] font-extrabold leading-none text-black">
+                      {remaining}
+                    </strong>
+                    <span className="block whitespace-nowrap text-[2.7cqw] leading-tight tracking-[-0.03em] text-[#292747]">
+                      cuotas restantes
+                    </span>
+                  </dd>
+                  <dd className="min-w-0 pl-[1.6cqw] text-right">
+                    <strong
+                      className={`block whitespace-nowrap font-extrabold leading-tight tracking-[-0.045em] text-[#034aff] ${usd.length > 8 ? 'text-[4.9cqw]' : 'text-[5.9cqw]'}`}
+                    >
+                      {usd}
+                    </strong>
+                    <span
+                      className={`block whitespace-nowrap font-semibold leading-tight tracking-[-0.035em] text-[#33314f] ${pen.length > 9 ? 'text-[3.1cqw]' : 'text-[3.6cqw]'}`}
+                    >
+                      {pen}
+                    </span>
+                  </dd>
+                </div>
+              ),
+            )}
+          </dl>
+        </div>
       </div>
     </section>
   );
