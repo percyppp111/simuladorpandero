@@ -7,7 +7,7 @@ import {
   Coins,
   Flag,
   Leaf,
-  Star,
+  Zap,
 } from 'lucide-react';
 
 import { MIN_SIMULATOR_VALUE } from '@/lib/simulator';
@@ -24,6 +24,7 @@ const AUCTION_PAYMENT_OPTIONS = Array.from(
 type AuctionSimulationSectionProps = {
   advisorName: string;
   advisorPhone: string;
+  proposalDate: string;
   auctionMonth: number;
   onMonthChange: (month: number) => void;
   auctionPayments: number;
@@ -43,6 +44,7 @@ type AuctionSimulationSectionProps = {
 export function AuctionSimulationSection({
   advisorName,
   advisorPhone,
+  proposalDate,
   auctionMonth,
   onMonthChange,
   auctionPayments,
@@ -81,16 +83,18 @@ export function AuctionSimulationSection({
   const options = [
     {
       name: 'A',
-      label: 'Termina antes',
+      label: 'Menor plazo',
+      badge: 'Mantén tu cuota',
       remaining: optionARemainingPayments,
       usd: optionAPaymentUsd,
       pen: optionAPaymentPen,
-      Icon: Star,
+      Icon: Zap,
       green: false,
     },
     {
       name: 'B',
-      label: 'Cuota más cómoda',
+      label: 'Menor cuota',
+      badge: 'Mantén tu plazo',
       remaining: optionBRemainingPayments,
       usd: optionBPaymentUsd,
       pen: optionBPaymentPen,
@@ -108,21 +112,28 @@ export function AuctionSimulationSection({
         fontFamily: 'var(--font-geist-sans), Arial, Helvetica, sans-serif',
       }}
     >
-      <header className="px-[5.5cqw] pt-[3.5cqw]">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-[3cqw]">
-          <div className="relative min-h-[10.1cqw] min-w-0 pb-px pl-[3.4cqw]">
+      <header className="px-[4.5cqw] pt-[3cqw]">
+        <div className="grid grid-cols-[0.9fr_1.2fr_0.9fr] items-center gap-[1.6cqw]">
+          <div className="relative min-w-0 pl-[3cqw]">
             <span
               aria-hidden="true"
-              className="absolute inset-y-0 left-0 w-[0.75cqw] -translate-y-[1cqw] rounded-full bg-[#08a7e8]"
+              className="absolute inset-y-0 left-0 w-[0.75cqw] rounded-full bg-[#12b9e9]"
             />
-            <strong className="block break-words text-[3.8cqw] font-bold leading-[1.1] text-slate-950">
+            <strong className="block whitespace-nowrap text-[2.8cqw] font-extrabold leading-none tracking-[-0.025em] text-slate-950">
               {advisorName || '—'}
             </strong>
-            <span className="mt-[0.65cqw] block text-[3.75cqw] font-bold leading-none text-slate-900">
+            <span className="mt-[0.6cqw] block whitespace-nowrap text-[2.8cqw] font-extrabold leading-none text-slate-950">
               {advisorPhone || '—'}
             </span>
           </div>
-          <div className="relative -mt-[3.4cqw] h-[14.7cqw] w-[32cqw] shrink-0 translate-y-[1.8cqw]">
+          <div className="flex min-h-[7.4cqw] items-center gap-[1.8cqw] border-l border-[#0875e6] pl-[3.5cqw]">
+            <CalendarDays className="size-[5.2cqw] shrink-0 text-[#0875e6]" aria-hidden="true" />
+            <span className="text-[2.1cqw] font-extrabold leading-[1.05] tracking-[-0.025em] text-slate-950">
+              Fecha:
+              <strong className="mt-[0.35cqw] block whitespace-nowrap text-[2.8cqw] font-extrabold leading-none">{proposalDate}</strong>
+            </span>
+          </div>
+          <div className="relative h-[9.4cqw] w-full">
             <Image
               src="/assets/pandero-auto-logo.png"
               alt="Pandero AUTO"
@@ -223,148 +234,133 @@ export function AuctionSimulationSection({
               </h3>
             </div>
             <strong
-              className={`mt-[1.4cqw] block whitespace-nowrap font-extrabold leading-tight tracking-[-0.045em] text-[#003dce] ${auctionAmountUsd.length > 9 ? 'text-[6.5cqw]' : 'text-[8cqw]'}`}
+              className={`mt-[1.4cqw] block whitespace-nowrap font-extrabold leading-tight tracking-[-0.045em] text-[#003dce] ${auctionAmountUsd.length > 9 ? 'text-[6cqw]' : 'text-[7.3cqw]'}`}
             >
               {auctionAmountUsd}
             </strong>
-            <span className="block whitespace-nowrap text-[5.2cqw] font-semibold leading-tight tracking-[-0.03em] text-[#333554]">
+            <span className="block whitespace-nowrap text-[4.8cqw] font-semibold leading-tight tracking-[-0.03em] text-[#333554]">
               {auctionAmountPen}
             </span>
           </section>
         </div>
 
-        <div className="mt-[3cqw]" aria-labelledby="auctionOptionsTitle">
-          <div className="relative overflow-hidden rounded-[1.8cqw] bg-gradient-to-r from-[#0454f5] via-[#052ec7] to-[#0744db] px-[3.6cqw] py-[1.8cqw] text-white shadow-sm">
+        <div className="mx-[1cqw] mt-[3cqw]" aria-labelledby="auctionOptionsTitle">
+          <div className="relative flex h-[7.4cqw] items-center overflow-hidden rounded-[1.8cqw] bg-[linear-gradient(105deg,#043dff_0%,#0035c5_40%,#0065db_100%)] px-[3.6cqw] text-white shadow-sm">
             <span
               aria-hidden="true"
-              className="absolute inset-y-0 right-0 w-[16cqw] bg-gradient-to-r from-[#0878ff] to-[#3fa7ff] [clip-path:polygon(42%_0,100%_0,100%_100%,0_100%)]"
+              className="absolute inset-y-0 right-0 w-[15cqw] bg-gradient-to-r from-[#1687f8] to-[#37aaff] [clip-path:polygon(42%_0,100%_0,100%_100%,0_100%)]"
             />
             <h3
               id="auctionOptionsTitle"
-              className="relative flex items-center gap-[2.2cqw] whitespace-nowrap text-[4.8cqw] font-extrabold leading-tight tracking-[-0.03em]"
+              className="relative flex items-center gap-[2.2cqw] whitespace-nowrap text-[4.2cqw] font-extrabold leading-tight tracking-[-0.03em]"
             >
               <ChartNoAxesColumnIncreasing
                 aria-hidden="true"
-                className="size-[6.3cqw] shrink-0 border-r border-white/80 pr-[1.5cqw]"
+                className="size-[5.4cqw] shrink-0 border-r border-white/80 pr-[1.5cqw]"
               />
               Resumen de tu simulación
             </h3>
           </div>
 
-          <dl className="mt-[2.2cqw] grid grid-cols-3 gap-[1.7cqw]">
+          <dl className="mt-[2cqw] grid grid-cols-3 divide-x divide-[#3984ff] rounded-[2.2cqw] border-[0.15cqw] border-[#c4e5ff] bg-[linear-gradient(115deg,#f2f9ff_0%,#f9fcff_55%,#edf5fa_100%)] px-[1cqw] py-[1.6cqw] shadow-[0_2px_5px_#1689e609]">
             {[
               {
                 label: 'Pagadas',
                 value: paidPayments,
                 Icon: Coins,
-                tone: 'from-[#f2f9ff] to-[#dceeff]',
-                border: 'border-blue-200',
-                icon: 'text-blue-600',
-                accent: 'bg-blue-600',
-                divider: 'border-blue-500',
+                icon: 'bg-gradient-to-br from-[#e1f4ff] to-[#c9eaff] text-[#008cff]',
               },
               {
                 label: 'Adelantadas',
                 value: auctionPayments,
                 Icon: CalendarDays,
-                tone: 'from-[#fffaf0] to-[#fff0c9]',
-                border: 'border-amber-200',
-                icon: 'text-orange-500',
-                accent: 'bg-orange-500',
-                divider: 'border-orange-400',
+                icon: 'bg-gradient-to-br from-[#fff9ec] to-[#ffeed3] text-[#ff7900]',
               },
               {
                 label: 'Restantes',
                 value: remainingPayments,
                 Icon: Clock3,
-                tone: 'from-[#f4fcf8] to-[#e7f7ef]',
-                border: 'border-emerald-200',
-                icon: 'text-green-700',
-                accent: 'bg-green-700',
-                divider: 'border-green-600',
+                icon: 'bg-gradient-to-br from-[#e9fff4] to-[#d1f8e8] text-[#00953a]',
               },
             ].map(
-              ({ label, value, Icon, tone, border, icon, accent, divider }) => (
+              ({ label, value, Icon, icon }) => (
                 <div
                   key={label}
-                  className={`relative grid min-w-0 grid-cols-[auto_1fr] items-center gap-[1.2cqw] overflow-hidden rounded-[2.1cqw] border bg-gradient-to-br ${border} ${tone} px-[1.4cqw] py-[2cqw] shadow-[0_4px_8px_rgb(15_73_122/12%)]`}
+                  className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-[2cqw] px-[2cqw]"
                 >
                   <span
-                    className={`flex size-[7cqw] shrink-0 items-center justify-center rounded-full bg-white shadow-md ${icon}`}
+                    className={`flex size-[6.8cqw] shrink-0 items-center justify-center rounded-full shadow-[0_0.5cqw_0.7cqw_#243f5620] ${icon}`}
                   >
-                    <Icon aria-hidden="true" className="size-[4.2cqw]" />
+                    <Icon aria-hidden="true" className="size-[4cqw]" strokeWidth={2.2} />
                   </span>
-                  <div
-                    className={`min-w-0 border-l ${divider} pl-[1.2cqw] text-center`}
-                  >
-                    <dt className="whitespace-nowrap text-[2.4cqw] font-bold leading-tight tracking-[-0.04em] text-[#12125a]">
+                  <div className="min-w-0">
+                    <dt className="whitespace-nowrap text-[2.55cqw] font-bold leading-tight tracking-[-0.035em] text-[#090c34]">
                       {label}
                     </dt>
-                    <dd>
-                      <strong className="block text-[6.4cqw] font-extrabold leading-none text-black">
+                    <dd className="mt-[0.3cqw] flex items-baseline gap-[1cqw] whitespace-nowrap">
+                      <strong className="text-[4.6cqw] font-extrabold leading-none tracking-tight text-black">
                         {value}
                       </strong>
-                      <span className="block text-[2.8cqw] font-semibold leading-tight text-[#17175c]">
+                      <span className="text-[3.4cqw] font-medium leading-none tracking-tight text-[#090c24]">
                         cuotas
                       </span>
                     </dd>
                   </div>
-                  <span
-                    aria-hidden="true"
-                    className={`absolute inset-x-0 bottom-0 h-[0.8cqw] ${accent}`}
-                  />
                 </div>
               ),
             )}
           </dl>
 
-          <dl className="mt-[3cqw] space-y-[2.8cqw] pb-[1.2cqw]">
+          <h4 id="auctionChoiceTitle" className="mt-[2.8cqw] flex items-center gap-[1.7cqw] whitespace-nowrap text-center text-[4cqw] font-bold leading-tight tracking-[-0.035em] text-[#0c51b6]">
+            <span aria-hidden="true" className="h-[0.25cqw] min-w-0 flex-1 bg-[#095bd4] shadow-[0_0.3cqw_0_#dbeafe]" />
+            Elige cómo prefieres continuar
+            <span aria-hidden="true" className="h-[0.25cqw] min-w-0 flex-1 bg-[#095bd4] shadow-[0_0.3cqw_0_#dbeafe]" />
+          </h4>
+
+          <dl aria-labelledby="auctionChoiceTitle" className="mt-[4cqw] space-y-[4cqw] pb-[1.2cqw]">
             {options.map(
-              ({ name, label, remaining, usd, pen, Icon, green }) => (
+              ({ name, label, badge, remaining, usd, pen, Icon, green }) => (
                 <div
                   key={name}
-                  className={`grid grid-cols-[1.25fr_1fr_1.04fr] items-center rounded-[2.6cqw] border-2 px-[1.8cqw] py-[3cqw] ${green ? 'border-green-500 bg-gradient-to-br from-[#effcf3] to-[#cdf4e4]' : 'border-sky-400 bg-gradient-to-br from-[#eff9ff] to-[#cbe5fc]'}`}
+                  className={`relative grid min-h-[20.6cqw] grid-cols-[40%_24%_36%] items-center rounded-[2.6cqw] border-[0.3cqw] border-b-[0.45cqw] px-[2.3cqw] py-[2.2cqw] shadow-[0_0.4cqw_0.6cqw_#1689e612] ${green ? 'border-[#08c54b] bg-[linear-gradient(120deg,#e2faed_0%,#f8fffb_55%,#e9fcf1_100%)]' : 'border-[#069af7] bg-[linear-gradient(120deg,#e9f6ff_0%,#f7fcff_55%,#e2f2ff_100%)]'}`}
                 >
-                  <dt className="flex min-w-0 items-center gap-[1.2cqw]">
-                    <span
-                      className={`flex size-[7.6cqw] shrink-0 items-center justify-center rounded-full bg-white shadow-md ${green ? 'text-green-700' : 'text-[#004bff]'}`}
-                    >
-                      <Icon
-                        aria-hidden="true"
-                        className={`size-[4.5cqw] ${green ? '' : 'fill-current'}`}
-                      />
+                  <span aria-hidden="true" className={`pointer-events-none absolute left-0 top-0 h-[14cqw] w-[10cqw] rounded-tl-[2.3cqw] [clip-path:polygon(0_0,100%_0,0_100%)] ${green ? 'bg-gradient-to-br from-[#a8f2ad] to-[#dcfbe0]' : 'bg-gradient-to-br from-[#9ed4fa] to-[#def1ff]'}`} />
+                  <span className={`absolute left-[6.6cqw] top-0 z-10 flex -translate-y-1/2 items-center overflow-hidden rounded-full text-white shadow-[0_0.4cqw_0.6cqw_#123e5f30] ${green ? 'bg-[linear-gradient(100deg,#00b400_0%,#009843_100%)]' : 'bg-[linear-gradient(100deg,#009cff_0%,#0048dc_100%)]'}`}>
+                    <span className="flex h-[5cqw] w-[5.5cqw] items-center justify-center bg-white/10">
+                      <Icon aria-hidden="true" className={`size-[3.6cqw] ${green ? '' : 'fill-current'}`} />
                     </span>
-                    <span className="min-w-0">
-                      <strong
-                        className={`block whitespace-nowrap text-[4.6cqw] font-extrabold leading-tight tracking-[-0.04em] ${green ? 'text-green-800' : 'text-[#0718db]'}`}
-                      >
-                        Opción {name}
-                      </strong>
-                      <span
-                        className={`mt-[0.7cqw] block whitespace-nowrap rounded-full border px-[1.1cqw] py-[0.5cqw] text-center font-bold leading-tight tracking-[-0.035em] ${green ? 'border-emerald-300 bg-emerald-100 text-[2.45cqw] text-green-800' : 'border-sky-300 bg-sky-100 text-[2.8cqw] text-blue-700'}`}
-                      >
-                        {label}
-                      </span>
+                    <span className="whitespace-nowrap px-[1.4cqw] text-[3cqw] font-extrabold leading-none tracking-[-0.03em]">
+                      {badge}
+                    </span>
+                  </span>
+                  <dt className="relative min-w-0 pl-[2.2cqw]">
+                    <strong
+                      className="mt-[0.9cqw] block whitespace-nowrap text-[4.7cqw] font-extrabold leading-[1.1] tracking-[-0.035em] text-black"
+                    >
+                      {label}
+                    </strong>
+                    <span className="mt-[0.5cqw] block text-[3cqw] font-medium leading-tight text-[#737d9c]">
+                      Opción {name}
                     </span>
                   </dt>
                   <dd
-                    className={`border-x text-center ${green ? 'border-emerald-600' : 'border-blue-500'}`}
+                    className={`relative border-x py-[0.6cqw] text-center ${green ? 'border-[#09ba53]' : 'border-[#126bff]'}`}
                   >
-                    <strong className="block text-[6.8cqw] font-extrabold leading-none text-black">
+                    <strong className="block text-[7.5cqw] font-extrabold leading-none tracking-tight text-black">
                       {remaining}
                     </strong>
-                    <span className="block whitespace-nowrap text-[2.7cqw] leading-tight tracking-[-0.03em] text-[#292747]">
+                    <span className="mt-[0.7cqw] block whitespace-nowrap text-[2.4cqw] leading-tight tracking-[-0.03em] text-[#4e5270]">
                       cuotas restantes
                     </span>
                   </dd>
-                  <dd className="min-w-0 pl-[1.6cqw] text-right">
+                  <dd className="relative min-w-0 px-[1cqw] text-center">
                     <strong
-                      className={`block whitespace-nowrap font-extrabold leading-tight tracking-[-0.045em] text-[#034aff] ${usd.length > 8 ? 'text-[4.9cqw]' : 'text-[5.9cqw]'}`}
+                      className={`block whitespace-nowrap font-extrabold leading-[1.1] tracking-[-0.045em] text-[#034aff] ${usd.length > 8 ? 'text-[4.9cqw]' : 'text-[6cqw]'}`}
                     >
                       {usd}
                     </strong>
                     <span
-                      className={`block whitespace-nowrap font-semibold leading-tight tracking-[-0.035em] text-[#33314f] ${pen.length > 9 ? 'text-[3.1cqw]' : 'text-[3.6cqw]'}`}
+                      className={`mt-[0.8cqw] block whitespace-nowrap font-semibold leading-[1.1] tracking-[-0.035em] text-[#44445e] ${pen.length > 9 ? 'text-[3.5cqw]' : 'text-[4cqw]'}`}
                     >
                       {pen}
                     </span>
