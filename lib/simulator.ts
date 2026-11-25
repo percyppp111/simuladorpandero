@@ -41,12 +41,12 @@ export function calculateTermMonths(groupProgress: number) {
   return TOTAL_TERM_MONTHS - normalizeGroupProgress(groupProgress) + 1;
 }
 
-export function calculateMonthlyFeeUsd(amountUsd: number, termMonths: number) {
-  return (
-    (amountUsd / TOTAL_TERM_MONTHS) *
-    (1 + 0.21 * 1.18) *
-    (TOTAL_TERM_MONTHS / termMonths)
-  );
+export function calculateMonthlyFeeUsd(
+  amountUsd: number,
+  termMonths: number,
+  administrationRate: number,
+) {
+  return (amountUsd * (1 + administrationRate * 1.18)) / termMonths;
 }
 
 export function calculateTotalEntryUsd(

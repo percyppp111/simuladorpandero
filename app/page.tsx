@@ -12,9 +12,16 @@ import {
   useState,
 } from 'react';
 import {
+  Award,
   CalendarDays,
+  CarFront,
   Clock3,
   CreditCard,
+  DollarSign,
+  Download,
+  FileText,
+  Landmark,
+  LoaderCircle,
   Phone,
   ReceiptText,
   Trash2,
@@ -182,6 +189,7 @@ function TimelineSegmentLabel({
 
 export default function Home() {
   const [certificateId, setCertificateId] = useState(CERTIFICATES[0].id);
+  const [administrationRate, setAdministrationRate] = useState(0.21);
   const [advisorName, setAdvisorName] = useState('Percy Flores');
   const [advisorPhone, setAdvisorPhone] = useState('963 845 676');
   const [clientName, setClientName] = useState('Julian Robles Paredes');
@@ -201,6 +209,12 @@ export default function Home() {
   const [auctionMonth, setAuctionMonth] = useState(MIN_SIMULATOR_VALUE);
   const [auctionPayments, setAuctionPayments] = useState(12);
   const [savedScenarios, setSavedScenarios] = useState<SavedScenario[]>([]);
+  const financingSummaryRef = useRef<HTMLElement>(null);
+  const auctionSummaryRef = useRef<HTMLDivElement>(null);
+  const [downloadingSummary, setDownloadingSummary] = useState<
+    'financing' | 'auction' | null
+  >(null);
+  const [downloadError, setDownloadError] = useState('');
   const planFigureRef = useRef<HTMLElement>(null);
   const planBarRef = useRef<HTMLDivElement>(null);
   const timelineDragRef = useRef<TimelineDragSnapshot | null>(null);
@@ -214,6 +228,93 @@ export default function Home() {
     remaining: 'hidden',
     advanced: 'hidden',
   });
+
+  const downloadSummary = async (summary: 'financing' | 'auction') => {
+    const node = summary === 'financing'
+      ? financingSummaryRef.current
+      : auctionSummaryRef.current?.querySelector<HTMLElement>('section');
+    if (!node || downloadingSummary) return;
+
+    setDownloadingSummary(summary);
+    setDownloadError('');
+    try {
+      await document.fonts.ready;
+      const { getFontEmbedCSS, toSvg } = await import('html-to-image');
+      const options = {
+        preferredFontFormat: 'woff2',
+        includeQueryParams: true,
+      };
+      const fontEmbedCSS = await getFontEmbedCSS(node, options);
+      const { width, height } = node.getBoundingClientRect();
+      const fontAttribute = 'data-summary-export-font-size';
+      const elements = [node, ...node.querySelectorAll<HTMLElement | SVGElement>('*')];
+      const previousAttributes = elements.map((element) => element.getAttribute(fontAttribute));
+      let svgUrl: string;
+
+      // Preserve fractional font sizes that the image renderer rounds down.
+      try {
+        elements.forEach((element) => {
+          element.setAttribute(fontAttribute, getComputedStyle(element).fontSize);
+        });
+        svgUrl = await toSvg(node, {
+          ...options,
+          width,
+          height,
+          backgroundColor: '#ffffff',
+          fontEmbedCSS,
+        });
+      } finally {
+        elements.forEach((element, index) => {
+          const previous = previousAttributes[index];
+          if (previous === null) element.removeAttribute(fontAttribute);
+          else element.setAttribute(fontAttribute, previous);
+        });
+      }
+
+      const svg = new DOMParser().parseFromString(
+        decodeURIComponent(svgUrl.slice(svgUrl.indexOf(',') + 1)),
+        'image/svg+xml',
+      );
+      svg.querySelectorAll<HTMLElement | SVGElement>(`[${fontAttribute}]`).forEach((element) => {
+        element.style.fontSize = element.getAttribute(fontAttribute)!;
+        element.removeAttribute(fontAttribute);
+      });
+      // Keep the header's final margin outside its natural height, as on the page.
+      const header = svg.querySelector<HTMLElement>('header');
+      if (header) header.style.height = 'auto';
+      const image = new window.Image();
+      image.decoding = 'async';
+      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg.documentElement))}`;
+      await image.decode();
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = Math.ceil(height * canvas.width / width);
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('No se pudo crear la imagen');
+      context.fillStyle = '#ffffff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error('No se generó la imagen');
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = summary === 'financing'
+        ? 'plan-de-financiamiento.png'
+        : 'remate-y-ultimas-cuotas.png';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      console.error('No se pudo descargar el resumen:', error);
+      setDownloadError('No se pudo descargar la imagen. Inténtalo nuevamente.');
+    } finally {
+      setDownloadingSummary(null);
+    }
+  };
 
   const updateTimelineSegmentDisplay = useCallback(
     (segment: TimelineSegmentKey, display: TimelineSegmentDisplay) => {
@@ -259,6 +360,7 @@ export default function Home() {
   const monthlyPayment = calculateMonthlyFeeUsd(
     selectedCertificate.amountUsd,
     termMonths,
+    administrationRate,
   );
   const totalEntry = calculateTotalEntryUsd(
     selectedCertificate.amountUsd,
@@ -592,42 +694,42 @@ export default function Home() {
         </header>
 
         <div className="grid gap-0 bg-transparent lg:grid-cols-12">
-          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(360px,25rem)_minmax(0,1fr)] lg:items-stretch lg:gap-4">
-            <div className="grid gap-3 lg:self-start">
+          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-2 lg:items-start lg:gap-4">
+            <div className="grid gap-3 lg:contents">
               <section
-                className="overflow-hidden rounded-[1.75rem] border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
+                className="min-w-0 overflow-hidden rounded-2xl border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)] lg:col-start-1 lg:row-start-1"
                 aria-labelledby="certificateTitle"
               >
-                <div className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-blue-50 to-sky-100 px-4 pb-5 pt-4">
+                <div className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-blue-50 to-sky-100 px-3 py-2">
                   <div className="absolute -bottom-8 left-1/3 h-20 w-64 rotate-[-8deg] rounded-[50%] bg-white/40" />
                   <div className="relative flex items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center">
                       <h2
                         id="certificateTitle"
-                        className="text-xl font-bold tracking-tight text-slate-950"
+                        className="text-base font-bold tracking-tight text-slate-950"
                       >
                         Certificado
                       </h2>
                     </div>
-                    <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-sky-200 bg-white/75 text-primary shadow-sm backdrop-blur-sm">
-                      <CreditCard className="size-6" aria-hidden="true" />
+                    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-sky-200 bg-white/75 text-primary shadow-sm backdrop-blur-sm">
+                      <CreditCard className="size-4" aria-hidden="true" />
                     </span>
                   </div>
                 </div>
 
-                <div className="relative -mt-2 rounded-t-[1.7rem] bg-white px-4 pb-4 pt-5">
+                <div className="relative bg-white p-3 pt-2">
                   <div className="grid grid-cols-[minmax(0,2fr)_minmax(108px,0.9fr)] gap-2.5">
                     <div>
                       <Label
                         htmlFor="certificate"
-                        className="mb-1.5 block text-sm font-medium text-slate-600"
+                        className="mb-1 block text-xs font-medium text-slate-600"
                       >
                         Certificado
                       </Label>
                       <select
                         id="certificate"
                         name="certificate"
-                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-medium outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+                        className="h-9 w-full rounded-lg border border-slate-300 bg-white px-2 text-base font-medium outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15 lg:text-sm"
                         value={certificateId}
                         onChange={(event) =>
                           setCertificateId(event.target.value)
@@ -643,14 +745,14 @@ export default function Home() {
                     <div>
                       <Label
                         htmlFor="groupProgress"
-                        className="mb-1.5 block whitespace-nowrap text-sm font-medium text-slate-600"
+                        className="mb-1 block whitespace-nowrap text-xs font-medium text-slate-600"
                       >
                         Avance de Grupo
                       </Label>
                       <select
                         id="groupProgress"
                         name="groupProgress"
-                        className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base font-medium outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15"
+                        className="h-9 w-full rounded-lg border border-slate-300 bg-white px-2 text-base font-medium outline-none transition focus:border-primary focus:ring-3 focus:ring-primary/15 lg:text-sm"
                         value={groupProgress}
                         onChange={(event) =>
                           updateGroupProgress(Number(event.target.value))
@@ -665,15 +767,42 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between gap-2 border-t border-sky-200 pt-3">
+                  <fieldset className="mt-2 border-t border-sky-200 pt-1.5">
+                    <legend className="mb-1 text-xs font-bold text-slate-900">
+                      ADM.
+                    </legend>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[0.18, 0.21].map((rate) => {
+                        const isSelected = administrationRate === rate;
+
+                        return (
+                          <button
+                            key={rate}
+                            type="button"
+                            aria-pressed={isSelected}
+                            onClick={() => setAdministrationRate(rate)}
+                            className={`h-8 rounded-lg border text-sm font-extrabold transition ${
+                              isSelected
+                                ? 'border-primary bg-primary text-white shadow-sm'
+                                : 'border-sky-200 bg-sky-50 text-primary hover:bg-sky-100'
+                            }`}
+                          >
+                            {Math.round(rate * 100)}%
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+
+                  <div className="mt-2 flex items-center justify-between gap-2 border-t border-sky-200 pt-2">
                     <Label
                       htmlFor="exchangeRate"
-                      className="max-w-32 text-sm font-bold leading-tight text-slate-900"
+                      className="max-w-32 text-xs font-bold leading-tight text-slate-900"
                     >
                       Tipo de cambio referencial
                     </Label>
                     <div className="flex shrink-0 items-center justify-end gap-1.5">
-                      <span className="text-sm font-medium text-slate-500">
+                      <span className="text-xs font-medium text-slate-500">
                         1 USD =
                       </span>
                       <Input
@@ -709,9 +838,9 @@ export default function Home() {
                             event.currentTarget.blur();
                           }
                         }}
-                        className="h-10 w-[4.75rem] rounded-xl px-2 text-center text-base font-medium"
+                        className="h-8 w-[4.5rem] rounded-lg px-2 text-center text-base font-medium lg:text-sm"
                       />
-                      <span className="text-sm font-medium text-slate-500">
+                      <span className="text-xs font-medium text-slate-500">
                         PEN
                       </span>
                     </div>
@@ -719,24 +848,25 @@ export default function Home() {
                 </div>
               </section>
 
+              <div className="grid min-w-0 gap-2 lg:col-start-2 lg:row-start-1 lg:flex lg:h-full lg:flex-col">
               <section
-                className="rounded-2xl border border-sky-200/90 bg-white p-4 shadow-[0_8px_22px_rgb(15_73_122/10%)]"
+                className="min-w-0 rounded-2xl border border-sky-200/90 bg-white p-3 shadow-[0_8px_22px_rgb(15_73_122/10%)]"
                 aria-labelledby="proposalDataTitle"
               >
                 <h2
                   id="proposalDataTitle"
-                  className="mb-3 border-l-4 border-sky-500 pl-3 text-lg font-extrabold tracking-tight text-slate-950"
+                  className="mb-2 border-l-4 border-sky-500 pl-2 text-base font-extrabold tracking-tight text-slate-950"
                 >
                   Datos de la propuesta
                 </h2>
-                <div className="grid gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <label className="block" htmlFor="advisorName">
                     <span className="mb-1 block text-xs font-medium text-slate-500">
                       Asesor
                     </span>
-                    <span className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2">
+                    <span className="flex h-9 items-center gap-1.5 rounded-lg bg-sky-50 px-2">
                       <UserRound
-                        className="size-4.5 shrink-0 text-primary"
+                        className="size-4 shrink-0 text-primary"
                         aria-hidden="true"
                       />
                       <input
@@ -745,7 +875,7 @@ export default function Home() {
                         type="text"
                         value={advisorName}
                         onChange={(event) => setAdvisorName(event.target.value)}
-                        className="min-w-0 flex-1 bg-transparent text-base font-bold text-slate-950 outline-none"
+                        className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none lg:text-sm"
                       />
                     </span>
                   </label>
@@ -753,9 +883,9 @@ export default function Home() {
                     <span className="mb-1 block text-xs font-medium text-slate-500">
                       Teléfono
                     </span>
-                    <span className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2">
+                    <span className="flex h-9 items-center gap-1.5 rounded-lg bg-sky-50 px-2">
                       <Phone
-                        className="size-4.5 shrink-0 text-primary"
+                        className="size-4 shrink-0 text-primary"
                         aria-hidden="true"
                       />
                       <input
@@ -765,17 +895,17 @@ export default function Home() {
                         inputMode="tel"
                         value={advisorPhone}
                         onChange={(event) => setAdvisorPhone(event.target.value)}
-                        className="min-w-0 flex-1 bg-transparent text-base font-bold text-slate-950 outline-none"
+                        className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none lg:text-sm"
                       />
                     </span>
                   </label>
-                  <label className="block" htmlFor="clientName">
+                  <label className="col-span-2 block" htmlFor="clientName">
                     <span className="mb-1 block text-xs font-medium text-slate-500">
                       Propuesta para
                     </span>
-                    <span className="flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2">
+                    <span className="flex h-9 items-center gap-1.5 rounded-lg bg-sky-50 px-2">
                       <UserRound
-                        className="size-4.5 shrink-0 text-primary"
+                        className="size-4 shrink-0 text-primary"
                         aria-hidden="true"
                       />
                       <input
@@ -784,171 +914,208 @@ export default function Home() {
                         type="text"
                         value={clientName}
                         onChange={(event) => setClientName(event.target.value)}
-                        className="min-w-0 flex-1 bg-transparent text-base font-bold text-slate-950 outline-none"
+                        className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none lg:text-sm"
                       />
                     </span>
                   </label>
                 </div>
               </section>
 
+              <div className="grid grid-cols-2 gap-2 lg:mt-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-label="Descargar Plan de Financiamiento (PNG)"
+                  aria-busy={downloadingSummary === 'financing'}
+                  disabled={downloadingSummary !== null}
+                  onClick={() => downloadSummary('financing')}
+                  className="min-w-0 border-sky-200 bg-white text-xs text-primary hover:bg-sky-50"
+                >
+                  {downloadingSummary === 'financing'
+                    ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                    : <Download className="size-3.5" aria-hidden="true" />}
+                  {downloadingSummary === 'financing' ? 'Preparando...' : 'Descargar plan'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  aria-label="Descargar Remate y Últimas Cuotas (PNG)"
+                  aria-busy={downloadingSummary === 'auction'}
+                  disabled={downloadingSummary !== null}
+                  onClick={() => downloadSummary('auction')}
+                  className="min-w-0 border-sky-200 bg-white text-xs text-primary hover:bg-sky-50"
+                >
+                  {downloadingSummary === 'auction'
+                    ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+                    : <Download className="size-3.5" aria-hidden="true" />}
+                  {downloadingSummary === 'auction' ? 'Preparando...' : 'Descargar remate'}
+                </Button>
+              </div>
+              {downloadError && (
+                <p role="alert" className="text-xs text-destructive">{downloadError}</p>
+              )}
+              </div>
+
               <section
-                className="overflow-hidden border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)]"
+                ref={financingSummaryRef}
+                className="min-w-0 overflow-hidden border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)] lg:col-start-1 lg:row-start-2"
                 aria-labelledby="certificateSummaryTitle"
                 style={{
                   containerType: 'inline-size',
                   fontFamily: 'var(--font-geist-sans), Arial, Helvetica, sans-serif',
                 }}
               >
-                <div className="bg-white px-[5.5cqw] pb-[2cqw] pt-[3.5cqw]">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-[3cqw]">
-                    <div className="relative min-h-[10.1cqw] min-w-0 pb-px pl-[3.4cqw]">
-                      <span
-                        className="absolute inset-y-0 left-0 w-[0.75cqw] -translate-y-[1cqw] rounded-full bg-[#08a7e8]"
-                        aria-hidden="true"
-                      />
-                      <strong className="block break-words text-[3.8cqw] font-bold leading-[1.1] text-slate-950">
+                <div className="px-[4.5cqw] pb-[2cqw] pt-[3cqw]">
+                  <div className="grid grid-cols-[0.9fr_1.2fr_0.9fr] items-center gap-[1.6cqw]">
+                    <div className="relative min-w-0 pl-[3cqw]">
+                      <span className="absolute inset-y-0 left-0 w-[0.75cqw] rounded-full bg-[#12b9e9]" aria-hidden="true" />
+                      <strong className="block whitespace-nowrap text-[2.8cqw] font-extrabold leading-none tracking-[-0.025em] text-slate-950">
                         {advisorName || '—'}
                       </strong>
-                      <span className="mt-[0.65cqw] block text-[3.75cqw] font-bold leading-none text-slate-900">
+                      <span className="mt-[0.6cqw] block whitespace-nowrap text-[2.8cqw] font-extrabold leading-none text-slate-950">
                         {advisorPhone || '—'}
                       </span>
                     </div>
-                    <div className="relative -mt-[3.4cqw] h-[14.7cqw] w-[32cqw] shrink-0 translate-y-[1.8cqw]">
-                      <Image
-                        src="/assets/pandero-auto-logo.png"
-                        alt="Pandero AUTO"
-                        fill
-                        sizes="128px"
-                        className="object-contain object-right"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-[3cqw] px-[1.5cqw]">
-                    <div className="min-w-0">
-                      <span className="block text-[2.7cqw] font-normal leading-[1.1] text-slate-500">
-                        Propuesta para:
+                    <div className="flex min-h-[7.4cqw] items-center gap-[1.8cqw] border-l border-[#0875e6] pl-[3.5cqw]">
+                      <CalendarDays className="size-[5.2cqw] shrink-0 text-[#0875e6]" aria-hidden="true" />
+                      <span className="text-[2.1cqw] font-extrabold leading-[1.05] tracking-[-0.025em] text-slate-950">
+                        Fecha:
+                        <strong className="mt-[0.35cqw] block whitespace-nowrap text-[2.8cqw] font-extrabold leading-none">{proposalDate}</strong>
                       </span>
-                      <strong className="mt-[0.4cqw] block break-words text-[3.15cqw] font-bold leading-[1.1] text-slate-950">
-                        {clientName || '—'}
-                      </strong>
                     </div>
-                    <span className="whitespace-nowrap text-right text-[2.7cqw] font-normal leading-[1.1] text-slate-500">
-                      Fecha: {proposalDate}
-                    </span>
+                    <div className="relative h-[9.4cqw] w-full">
+                      <Image src="/assets/pandero-auto-logo.png" alt="Pandero AUTO" fill sizes="128px" className="object-contain object-right" />
+                    </div>
                   </div>
 
-                  <div className="mt-[4.2cqw] min-w-0 text-center">
-                    <h2
-                      id="certificateSummaryTitle"
-                      className="whitespace-nowrap text-[7.2cqw] font-extrabold leading-none tracking-[-0.025em] text-slate-950"
-                    >
-                      Plan de Financiamiento
-                    </h2>
-                    <span className="mt-[1.25cqw] block whitespace-nowrap text-[4.3cqw] font-semibold leading-[1.2] text-slate-500">
-                      Resumen Pandero 0KM y Seminuevos
-                    </span>
-                    <span
-                      className="mx-auto mt-[2.25cqw] block h-[1cqw] w-[16cqw] rounded-full bg-[#036cfb]"
-                      aria-hidden="true"
-                    />
+                  <div className="mt-[1.6cqw] inline-flex w-[60cqw] max-w-full items-center rounded-full bg-[linear-gradient(100deg,#0aa5e9_0%,#0754d8_100%)] px-[2.7cqw] py-[1.1cqw] text-[2.8cqw] leading-none tracking-[-0.02em] text-white shadow-sm">
+                    <span className="mr-[1cqw] whitespace-nowrap font-normal">Cotización para:</span>
+                    <strong className="truncate font-extrabold">{clientName || '—'}</strong>
+                  </div>
+
+                  <div className="mt-[2.6cqw] grid grid-cols-2 items-end">
+                    <div className="min-w-0 pb-[1cqw] pl-[1.6cqw]">
+                      <h2 id="certificateSummaryTitle" className="text-[6.3cqw] font-extrabold leading-[0.94] tracking-[-0.04em] text-slate-950">
+                        Plan de<br />Financiamiento
+                      </h2>
+                      <span className="mt-[1.2cqw] block whitespace-nowrap text-[3cqw] font-medium leading-none text-slate-500">
+                        Vehículos nuevos y seminuevos
+                      </span>
+                      <span className="mt-[2cqw] block h-[0.8cqw] w-[15cqw] rounded-full bg-[#086bff]" aria-hidden="true" />
+                    </div>
+                    <div className="relative h-[20cqw]">
+                      <span className="absolute right-0 top-[-1cqw] h-[20cqw] w-[30cqw] rounded-t-full bg-[linear-gradient(135deg,#b4e4ff_0%,#edf8ff_75%,#ffffff_100%)]" aria-hidden="true" />
+                      <div className="absolute bottom-[1cqw] right-[-1cqw] h-[18cqw] w-[24cqw]">
+                        <Image src="/assets/financing-sedan-white.png" alt="Vehículo seminuevo" fill sizes="150px" className="object-contain object-right" />
+                      </div>
+                      <div className="absolute bottom-[-3cqw] left-[1.5cqw] z-10 h-[24.75cqw] w-[33cqw]">
+                        <Image src="/assets/financing-suv-blue.png" alt="Vehículo nuevo" fill sizes="180px" className="object-contain object-left" />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <dl
-                  className="px-[5.5cqw] pb-[5.5cqw] pt-[4cqw]"
-                  style={{ containerType: 'inline-size' }}
-                >
-                  <div
-                    className="grid grid-cols-[51%_49%] items-center rounded-[5.5cqw] border-2 border-sky-300 bg-gradient-to-r from-sky-50 to-blue-50/90 px-[5.3cqw] py-[4.4cqw] shadow-[0_5px_14px_rgb(14_165_233/16%)]"
-                  >
-                    <dt className="whitespace-nowrap pl-[1cqw] text-[6.45cqw] font-extrabold leading-none text-slate-950">
-                      Certificado
+                <dl className="px-[4.5cqw] pb-[6cqw]" style={{ containerType: 'inline-size' }}>
+                  <div className="grid grid-cols-[15%_39%_46%] items-center rounded-[5.5cqw] border-2 border-sky-400 bg-gradient-to-r from-sky-50 to-blue-50/90 px-[3.8cqw] py-[3.2cqw] shadow-[0_5px_14px_rgb(14_165_233/22%)]">
+                    <span className="relative flex size-[11cqw] items-center justify-center text-sky-600">
+                      <FileText className="size-[10cqw]" aria-hidden="true" />
+                      <span className="absolute bottom-[-0.5cqw] right-[-0.5cqw] flex size-[5cqw] items-center justify-center rounded-full bg-sky-600 text-white">
+                        <DollarSign className="size-[3.5cqw]" aria-hidden="true" />
+                      </span>
+                    </span>
+                    <dt className="border-l border-sky-500 pl-[3cqw]">
+                      <strong className="block whitespace-nowrap text-[5.2cqw] font-extrabold leading-none text-slate-950">Certificado</strong>
+                      <span className="mt-[1.4cqw] block text-[4cqw] font-medium leading-[1.08] text-slate-500">Monto de<br />financiamiento</span>
                     </dt>
-                    <dd className="relative min-w-0 pl-[5.9cqw] text-right tabular-nums">
-                      <span
-                        className="absolute left-0 top-1/2 h-[13cqw] w-px -translate-y-1/2 bg-sky-400"
-                        aria-hidden="true"
-                      />
-                      <span
-                        className="block whitespace-nowrap text-[6.9cqw] font-extrabold leading-none tracking-tight text-[#0364e0]"
-                        style={{
-                          fontSize:
-                            formatUsd(selectedCertificate.amountUsd).length > 10
-                              ? '6.2cqw'
-                              : undefined,
-                        }}
-                      >
+                    <dd className="border-l border-sky-500 pl-[3.5cqw] text-right tabular-nums">
+                      <span className="block whitespace-nowrap text-[6.7cqw] font-extrabold leading-none tracking-tight text-[#0867ec]" style={{ fontSize: formatUsd(selectedCertificate.amountUsd).length > 10 ? '6cqw' : undefined }}>
                         {formatUsd(selectedCertificate.amountUsd)}
                       </span>
-                      <span className="mt-[2.1cqw] block whitespace-nowrap text-[5.2cqw] font-semibold leading-none text-slate-600">
+                      <span className="mt-[1.5cqw] block whitespace-nowrap text-[4.4cqw] font-semibold leading-none text-slate-600">
                         {formatPen(toPen(selectedCertificate.amountUsd))}
                       </span>
                     </dd>
                   </div>
-                  <div className="mt-[2.2cqw] flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 py-[2.3cqw]">
-                    <div className="flex min-w-0 items-center gap-[3cqw]">
-                      <span className="flex size-[9.5cqw] shrink-0 items-center justify-center rounded-[4.5cqw] bg-sky-50 text-primary">
+                  <div className="mt-[2.2cqw] flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 px-[1.5cqw] py-[1.4cqw]">
+                    <div className="flex min-w-0 items-center gap-[4.2cqw]">
+                      <span className="flex size-[8cqw] shrink-0 items-center justify-center rounded-[3.2cqw] bg-sky-50 text-primary">
                         <ReceiptText className="size-[5cqw]" aria-hidden="true" />
                       </span>
-                      <dt className="text-[4.8cqw] font-normal leading-tight text-slate-800">
-                        C. de Inscripción
+                      <dt className="text-[4.2cqw] font-normal leading-tight text-slate-950">
+                        Cuota de inscripción
                       </dt>
                     </div>
-                    <dd className="flex shrink-0 flex-col items-end text-right text-[6.4cqw] font-extrabold leading-none tracking-tight text-slate-950 tabular-nums">
+                    <dd className="flex shrink-0 -translate-x-[1cqw] flex-col items-end text-right text-[5.5cqw] font-extrabold leading-none tracking-tight text-slate-950 tabular-nums">
                       <span className="whitespace-nowrap">
                         {formatUsd(registrationFee)}
                       </span>
-                      <span className="mt-[1.4cqw] whitespace-nowrap text-[3.8cqw] font-medium leading-none text-slate-500">
+                      <span className="mt-[1cqw] whitespace-nowrap text-[3.5cqw] font-medium leading-none text-slate-500">
                         (4% + IGV)
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 py-[2.3cqw]">
-                    <div className="flex min-w-0 items-center gap-[3cqw]">
-                      <span className="flex size-[9.5cqw] shrink-0 items-center justify-center rounded-[4.5cqw] bg-sky-50 text-primary">
+                  <div className="flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 px-[1.5cqw] py-[1.4cqw]">
+                    <div className="flex min-w-0 items-center gap-[4.2cqw]">
+                      <span className="flex size-[8cqw] shrink-0 items-center justify-center rounded-[3.2cqw] bg-sky-50 text-primary">
                         <CalendarDays className="size-[5cqw]" aria-hidden="true" />
                       </span>
-                      <dt className="text-[4.8cqw] font-normal leading-tight text-slate-800">
+                      <dt className="text-[4.2cqw] font-normal leading-tight text-slate-950">
                         Cuota mensual
                       </dt>
                     </div>
-                    <dd className="flex shrink-0 flex-col items-end text-right text-[6.4cqw] font-extrabold leading-none tracking-tight text-sky-600 tabular-nums">
+                    <dd className="flex shrink-0 -translate-x-[1cqw] flex-col items-end text-right text-[5.5cqw] font-extrabold leading-none tracking-tight text-sky-600 tabular-nums">
                       <span className="whitespace-nowrap">
                         {formatUsd(monthlyPayment)}
                       </span>
-                      <span className="mt-[1.4cqw] whitespace-nowrap text-[3.8cqw] font-medium leading-none text-slate-500">
+                      <span className="mt-[1cqw] whitespace-nowrap text-[3.5cqw] font-medium leading-none text-slate-500">
                         {formatPen(toPen(monthlyPayment))}
                       </span>
                     </dd>
                   </div>
-                  <div className="flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 py-[2.3cqw]">
-                    <div className="flex min-w-0 items-center gap-[3cqw]">
-                      <span className="flex size-[9.5cqw] shrink-0 items-center justify-center rounded-[4.5cqw] bg-sky-50 text-primary">
+                  <div className="flex items-center justify-between gap-[2.5cqw] border-b border-sky-100 px-[1.5cqw] py-[1.4cqw]">
+                    <div className="flex min-w-0 items-center gap-[4.2cqw]">
+                      <span className="flex size-[8cqw] shrink-0 items-center justify-center rounded-[3.2cqw] bg-sky-50 text-primary">
                         <Clock3 className="size-[5cqw]" aria-hidden="true" />
                       </span>
-                      <dt className="text-[4.8cqw] font-normal leading-tight text-slate-800">
+                      <dt className="text-[4.2cqw] font-normal leading-tight text-slate-950">
                         Plazo
                       </dt>
                     </div>
-                    <dd className="whitespace-nowrap text-[6.4cqw] font-extrabold leading-none tracking-tight text-slate-950 tabular-nums">
+                    <dd className="-translate-x-[1cqw] whitespace-nowrap text-[5.5cqw] font-extrabold leading-none tracking-tight text-slate-950 tabular-nums">
                       {termMonths} meses
                     </dd>
                   </div>
-                  <div className="mt-[3.3cqw] overflow-hidden rounded-[5.5cqw] bg-[linear-gradient(105deg,#22a8f2_0%,#1488ea_52%,#0b62da_100%)] px-[4.7cqw] py-[4.5cqw] text-white shadow-md">
+
+                  <div className="grid grid-cols-3 border-b border-sky-100 py-[2.2cqw]">
+                    {[
+                      { icon: Landmark, text: <>Sin crédito<br />bancario</> },
+                      { icon: CarFront, text: <>Tú eliges<br />la marca<br />y modelo</> },
+                      { icon: Award, text: <>Más de<br />57 años de<br />trayectoria</> },
+                    ].map(({ icon: BenefitIcon, text }, index) => (
+                      <div key={index} className={`flex items-center gap-[2cqw] px-[1.2cqw] ${index > 0 ? 'border-l border-sky-300' : ''}`}>
+                        <span className="flex size-[8.5cqw] shrink-0 items-center justify-center rounded-[3cqw] bg-sky-50 text-sky-600">
+                          <BenefitIcon className="size-[5.8cqw]" aria-hidden="true" />
+                        </span>
+                        <strong className="whitespace-nowrap text-[3.2cqw] font-semibold leading-[1.12] text-slate-950">{text}</strong>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-[3cqw] overflow-hidden rounded-[5.5cqw] bg-[linear-gradient(105deg,#09a9e9_0%,#0878e7_54%,#0750cd_100%)] px-[4.7cqw] py-[3.6cqw] text-white shadow-md">
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-[3cqw]">
                       <dt className="min-w-0 pr-1">
-                        <span className="block text-[5.5cqw] font-extrabold leading-tight">
-                          Total para ingreso
+                        <span className="block text-[5.2cqw] font-extrabold leading-tight">
+                          Inicia tu plan con
                         </span>
-                        <span className="mt-[1.4cqw] block whitespace-nowrap text-[3cqw] font-medium leading-tight text-white/90">
-                          (C. de Inscripción + 1ra Cuota)
+                        <span className="mt-[1cqw] block whitespace-nowrap text-[3.3cqw] font-medium leading-tight text-white/95">
+                          Inscripción + primera cuota
                         </span>
                       </dt>
                       <dd className="flex self-stretch flex-col justify-center border-l border-white/70 pl-[4cqw] text-right font-bold tracking-tight tabular-nums">
-                        <span className="block whitespace-nowrap text-[7.2cqw] font-extrabold leading-none">
+                        <span className="block whitespace-nowrap text-[6.4cqw] font-extrabold leading-none">
                           {formatUsd(totalEntry)}
                         </span>
-                        <span className="mt-[1.8cqw] block whitespace-nowrap text-[4.8cqw] font-medium leading-none text-white/90">
+                        <span className="mt-[1.3cqw] block whitespace-nowrap text-[4.3cqw] font-medium leading-none text-white/90">
                           {formatPen(toPen(totalEntry))}
                         </span>
                       </dd>
@@ -958,7 +1125,7 @@ export default function Home() {
               </section>
 
               <div
-                className="grid grid-cols-2 items-stretch gap-3 px-3 py-2 lg:py-3"
+                className="grid grid-cols-2 items-stretch gap-3 px-3 py-2 lg:col-start-1 lg:row-start-3 lg:py-3"
                 aria-label="Ilustraciones de aporte y sorteo"
               >
                 <div className="relative aspect-square w-full overflow-hidden rounded-2xl border-2 border-sky-200/90 bg-gradient-to-br from-white to-sky-50/80 shadow-[0_5px_14px_rgb(14_165_233/14%)] ring-1 ring-white">
@@ -990,10 +1157,12 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 bg-transparent lg:self-start">
+            <div className="flex flex-col gap-3 bg-transparent lg:contents">
+              <div ref={auctionSummaryRef} className="min-w-0 lg:col-start-2 lg:row-start-2">
                   <AuctionSimulationSection
                     advisorName={advisorName}
                     advisorPhone={advisorPhone}
+                    proposalDate={proposalDate}
                     auctionMonth={auctionMonth}
                     onMonthChange={updateAuctionMonth}
                     auctionPayments={auctionPayments}
@@ -1009,9 +1178,10 @@ export default function Home() {
                     optionBPaymentUsd={formatUsd(proratedPayment)}
                     optionBPaymentPen={formatPen(toPen(proratedPayment))}
                   />
+              </div>
 
               <section
-                className="relative order-3 overflow-hidden rounded-3xl border border-cyan-200/80 bg-[radial-gradient(circle_at_50%_22%,rgba(56,189,248,0.5),transparent_34%),linear-gradient(180deg,#0f3ca8_0%,#075fd4_48%,#e0f2fe_100%)] px-3.5 pb-3.5 pt-0 shadow-[0_12px_28px_rgba(15,63,150,0.28)] ring-1 ring-white/40 min-[420px]:px-4 min-[420px]:pb-4"
+                className="relative order-3 overflow-hidden rounded-3xl border border-cyan-200/80 bg-[radial-gradient(circle_at_50%_22%,rgba(56,189,248,0.5),transparent_34%),linear-gradient(180deg,#0f3ca8_0%,#075fd4_48%,#e0f2fe_100%)] px-3.5 pb-3.5 pt-0 shadow-[0_12px_28px_rgba(15,63,150,0.28)] ring-1 ring-white/40 min-[420px]:px-4 min-[420px]:pb-4 lg:col-start-2 lg:row-start-3"
                 aria-label="Plan de cuotas"
               >
                 <figure
