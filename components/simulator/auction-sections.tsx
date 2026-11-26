@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { useState } from 'react';
 import {
   CalendarDays,
   ChartNoAxesColumnIncreasing,
@@ -60,6 +61,7 @@ export function AuctionSimulationSection({
   optionBPaymentUsd,
   optionBPaymentPen,
 }: AuctionSimulationSectionProps) {
+  const [showProration, setShowProration] = useState(false);
   const controls = [
     {
       id: 'auctionPayments',
@@ -102,6 +104,54 @@ export function AuctionSimulationSection({
       green: true,
     },
   ];
+  const renderOptionCard = ({
+    name,
+    label,
+    badge,
+    remaining,
+    usd,
+    pen,
+    Icon,
+    green,
+  }: (typeof options)[number]) => (
+    <div
+      className={`relative grid min-h-[20.6cqw] grid-cols-[40%_24%_36%] items-center rounded-[2.6cqw] border-[0.3cqw] border-b-[0.45cqw] px-[2.3cqw] py-[2.2cqw] shadow-[0_0.4cqw_0.6cqw_#1689e612] ${green ? 'border-[#08c54b] bg-[linear-gradient(120deg,#e2faed_0%,#f8fffb_55%,#e9fcf1_100%)]' : 'border-[#069af7] bg-[linear-gradient(120deg,#e9f6ff_0%,#f7fcff_55%,#e2f2ff_100%)]'}`}
+    >
+      <span aria-hidden="true" className={`pointer-events-none absolute left-0 top-0 h-[14cqw] w-[10cqw] rounded-tl-[2.3cqw] [clip-path:polygon(0_0,100%_0,0_100%)] ${green ? 'bg-gradient-to-br from-[#a8f2ad] to-[#dcfbe0]' : 'bg-gradient-to-br from-[#9ed4fa] to-[#def1ff]'}`} />
+      <span className={`absolute left-[6.6cqw] top-0 z-10 flex -translate-y-1/2 items-center overflow-hidden rounded-full text-white shadow-[0_0.4cqw_0.6cqw_#123e5f30] ${green ? 'bg-[linear-gradient(100deg,#00b400_0%,#009843_100%)]' : 'bg-[linear-gradient(100deg,#009cff_0%,#0048dc_100%)]'}`}>
+        <span className="flex h-[5cqw] w-[5.5cqw] items-center justify-center bg-white/10">
+          <Icon aria-hidden="true" className={`size-[3.6cqw] ${green ? '' : 'fill-current'}`} />
+        </span>
+        <span className="whitespace-nowrap px-[1.4cqw] text-[3cqw] font-extrabold leading-none tracking-[-0.03em]">
+          {badge}
+        </span>
+      </span>
+      <dt className="relative min-w-0 pl-[2.2cqw]">
+        <strong className="mt-[0.9cqw] block whitespace-nowrap text-[4.7cqw] font-extrabold leading-[1.1] tracking-[-0.035em] text-black">
+          {label}
+        </strong>
+        <span className="mt-[0.5cqw] block text-[3cqw] font-medium leading-tight text-[#737d9c]">
+          Opción {name}
+        </span>
+      </dt>
+      <dd className={`relative border-x py-[0.6cqw] text-center ${green ? 'border-[#09ba53]' : 'border-[#126bff]'}`}>
+        <strong className="block text-[7.5cqw] font-extrabold leading-none tracking-tight text-black">
+          {remaining}
+        </strong>
+        <span className="mt-[0.7cqw] block whitespace-nowrap text-[2.4cqw] leading-tight tracking-[-0.03em] text-[#4e5270]">
+          cuotas restantes
+        </span>
+      </dd>
+      <dd className="relative min-w-0 px-[1cqw] text-center">
+        <strong className={`block whitespace-nowrap font-extrabold leading-[1.1] tracking-[-0.045em] text-[#034aff] ${usd.length > 8 ? 'text-[4.9cqw]' : 'text-[6cqw]'}`}>
+          {usd}
+        </strong>
+        <span className={`mt-[0.8cqw] block whitespace-nowrap font-semibold leading-[1.1] tracking-[-0.035em] text-[#44445e] ${pen.length > 9 ? 'text-[3.5cqw]' : 'text-[4cqw]'}`}>
+          {pen}
+        </span>
+      </dd>
+    </div>
+  );
 
   return (
     <section
@@ -317,58 +367,29 @@ export function AuctionSimulationSection({
             <span aria-hidden="true" className="h-[0.25cqw] min-w-0 flex-1 bg-[#095bd4] shadow-[0_0.3cqw_0_#dbeafe]" />
           </h4>
 
-          <dl aria-labelledby="auctionChoiceTitle" className="mt-[4cqw] space-y-[4cqw] pb-[1.2cqw]">
-            {options.map(
-              ({ name, label, badge, remaining, usd, pen, Icon, green }) => (
-                <div
-                  key={name}
-                  className={`relative grid min-h-[20.6cqw] grid-cols-[40%_24%_36%] items-center rounded-[2.6cqw] border-[0.3cqw] border-b-[0.45cqw] px-[2.3cqw] py-[2.2cqw] shadow-[0_0.4cqw_0.6cqw_#1689e612] ${green ? 'border-[#08c54b] bg-[linear-gradient(120deg,#e2faed_0%,#f8fffb_55%,#e9fcf1_100%)]' : 'border-[#069af7] bg-[linear-gradient(120deg,#e9f6ff_0%,#f7fcff_55%,#e2f2ff_100%)]'}`}
-                >
-                  <span aria-hidden="true" className={`pointer-events-none absolute left-0 top-0 h-[14cqw] w-[10cqw] rounded-tl-[2.3cqw] [clip-path:polygon(0_0,100%_0,0_100%)] ${green ? 'bg-gradient-to-br from-[#a8f2ad] to-[#dcfbe0]' : 'bg-gradient-to-br from-[#9ed4fa] to-[#def1ff]'}`} />
-                  <span className={`absolute left-[6.6cqw] top-0 z-10 flex -translate-y-1/2 items-center overflow-hidden rounded-full text-white shadow-[0_0.4cqw_0.6cqw_#123e5f30] ${green ? 'bg-[linear-gradient(100deg,#00b400_0%,#009843_100%)]' : 'bg-[linear-gradient(100deg,#009cff_0%,#0048dc_100%)]'}`}>
-                    <span className="flex h-[5cqw] w-[5.5cqw] items-center justify-center bg-white/10">
-                      <Icon aria-hidden="true" className={`size-[3.6cqw] ${green ? '' : 'fill-current'}`} />
-                    </span>
-                    <span className="whitespace-nowrap px-[1.4cqw] text-[3cqw] font-extrabold leading-none tracking-[-0.03em]">
-                      {badge}
-                    </span>
-                  </span>
-                  <dt className="relative min-w-0 pl-[2.2cqw]">
-                    <strong
-                      className="mt-[0.9cqw] block whitespace-nowrap text-[4.7cqw] font-extrabold leading-[1.1] tracking-[-0.035em] text-black"
-                    >
-                      {label}
-                    </strong>
-                    <span className="mt-[0.5cqw] block text-[3cqw] font-medium leading-tight text-[#737d9c]">
-                      Opción {name}
-                    </span>
-                  </dt>
-                  <dd
-                    className={`relative border-x py-[0.6cqw] text-center ${green ? 'border-[#09ba53]' : 'border-[#126bff]'}`}
-                  >
-                    <strong className="block text-[7.5cqw] font-extrabold leading-none tracking-tight text-black">
-                      {remaining}
-                    </strong>
-                    <span className="mt-[0.7cqw] block whitespace-nowrap text-[2.4cqw] leading-tight tracking-[-0.03em] text-[#4e5270]">
-                      cuotas restantes
-                    </span>
-                  </dd>
-                  <dd className="relative min-w-0 px-[1cqw] text-center">
-                    <strong
-                      className={`block whitespace-nowrap font-extrabold leading-[1.1] tracking-[-0.045em] text-[#034aff] ${usd.length > 8 ? 'text-[4.9cqw]' : 'text-[6cqw]'}`}
-                    >
-                      {usd}
-                    </strong>
-                    <span
-                      className={`mt-[0.8cqw] block whitespace-nowrap font-semibold leading-[1.1] tracking-[-0.035em] text-[#44445e] ${pen.length > 9 ? 'text-[3.5cqw]' : 'text-[4cqw]'}`}
-                    >
-                      {pen}
-                    </span>
-                  </dd>
-                </div>
-              ),
-            )}
-          </dl>
+          <div aria-labelledby="auctionChoiceTitle" className="mt-[4cqw] pb-[1.2cqw]">
+            <div className="relative">
+              {renderOptionCard(options[0])}
+              <button
+                type="button"
+                aria-controls="prorationOption"
+                aria-expanded={showProration}
+                aria-label={showProration ? 'Ocultar prorrateo' : 'Mostrar prorrateo'}
+                onClick={() => setShowProration((visible) => !visible)}
+                className="absolute bottom-0 left-1/2 z-20 flex size-[3.8cqw] min-h-5 min-w-5 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full border-[0.16cqw] border-[#08a544] bg-[#e7faed] text-[#087632] shadow-[0_0.25cqw_0.45cqw_#08763220] transition-colors hover:bg-[#d7f8e2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#08a544]"
+              >
+                <ChevronDown
+                  aria-hidden="true"
+                  className={`size-[2.6cqw] min-h-3 min-w-3 transition-transform ${showProration ? 'rotate-180' : ''}`}
+                />
+              </button>
+            </div>
+            {showProration ? (
+              <div id="prorationOption" className="mt-[2.8cqw]">
+                {renderOptionCard(options[1])}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </section>

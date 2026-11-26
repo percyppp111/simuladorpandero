@@ -88,6 +88,15 @@ type TimelineDragSnapshot = {
 
 const TIMELINE_AUCTION_MONTH_MAX = 18;
 const TIMELINE_AUCTION_PAYMENTS_MAX = 35;
+const ADVISORS = [
+  { name: 'Percy Flores', phone: '963 845 676' },
+  { name: 'Miriam Valer', phone: '907 715 021' },
+  { name: 'Hiromi Sato', phone: '972 211 532' },
+  { name: 'Wilmer Chapoñan', phone: '' },
+  { name: 'Jhosue Pajuelo', phone: '906 083 677' },
+  { name: 'Fanny Bravo', phone: '994 295 923' },
+  { name: 'Yasser Ortega', phone: '921 409 523' },
+] as const;
 
 const clampTimelineValue = (value: number, minimum: number, maximum: number) =>
   Math.min(Math.max(value, minimum), maximum);
@@ -229,6 +238,12 @@ export default function Home() {
     advanced: 'hidden',
   });
 
+  const updateAdvisor = (name: string) => {
+    const advisor = ADVISORS.find((item) => item.name === name);
+    setAdvisorName(name);
+    setAdvisorPhone(advisor?.phone ?? '');
+  };
+
   const downloadSummary = async (summary: 'financing' | 'auction') => {
     const node = summary === 'financing'
       ? financingSummaryRef.current
@@ -239,63 +254,102 @@ export default function Home() {
     setDownloadError('');
     try {
       await document.fonts.ready;
-      const { getFontEmbedCSS, toSvg } = await import('html-to-image');
+      const { getFontEmbedCSS, toBlob, toSvg } = await import('html-to-image');
       const options = {
         preferredFontFormat: 'woff2',
         includeQueryParams: true,
       };
       const fontEmbedCSS = await getFontEmbedCSS(node, options);
       const { width, height } = node.getBoundingClientRect();
-      const fontAttribute = 'data-summary-export-font-size';
-      const elements = [node, ...node.querySelectorAll<HTMLElement | SVGElement>('*')];
-      const previousAttributes = elements.map((element) => element.getAttribute(fontAttribute));
-      let svgUrl: string;
+      const outputWidth = 1200;
+      const outputHeight = Math.ceil(height * outputWidth / width);
+      let blob: Blob | null;
 
-      // Preserve fractional font sizes that the image renderer rounds down.
-      try {
-        elements.forEach((element) => {
-          element.setAttribute(fontAttribute, getComputedStyle(element).fontSize);
-        });
-        svgUrl = await toSvg(node, {
+      if (summary === 'auction') {
+        const images = [...node.querySelectorAll('img')];
+        await Promise.all(
+          images.map((image) => {
+            if (image.complete) return Promise.resolve();
+            return Promise.race([
+              image.decode().catch(() => undefined),
+              new Promise<void>((resolve) => window.setTimeout(resolve, 2_000)),
+            ]);
+          }),
+        );
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => resolve()),
+          ),
+        );
+        blob = await toBlob(node, {
           ...options,
           width,
           height,
+          canvasWidth: outputWidth,
+          canvasHeight: outputHeight,
+          pixelRatio: 1,
           backgroundColor: '#ffffff',
           fontEmbedCSS,
+          skipAutoScale: true,
         });
-      } finally {
-        elements.forEach((element, index) => {
-          const previous = previousAttributes[index];
-          if (previous === null) element.removeAttribute(fontAttribute);
-          else element.setAttribute(fontAttribute, previous);
-        });
-      }
+      } else {
+        const fontAttribute = 'data-summary-export-font-size';
+        const elements = [node, ...node.querySelectorAll<HTMLElement | SVGElement>('*')];
+        const previousAttributes = elements.map((element) =>
+          element.getAttribute(fontAttribute),
+        );
+        let svgUrl: string;
 
-      const svg = new DOMParser().parseFromString(
-        decodeURIComponent(svgUrl.slice(svgUrl.indexOf(',') + 1)),
-        'image/svg+xml',
-      );
-      svg.querySelectorAll<HTMLElement | SVGElement>(`[${fontAttribute}]`).forEach((element) => {
-        element.style.fontSize = element.getAttribute(fontAttribute)!;
-        element.removeAttribute(fontAttribute);
-      });
-      // Keep the header's final margin outside its natural height, as on the page.
-      const header = svg.querySelector<HTMLElement>('header');
-      if (header) header.style.height = 'auto';
-      const image = new window.Image();
-      image.decoding = 'async';
-      image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg.documentElement))}`;
-      await image.decode();
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      const canvas = document.createElement('canvas');
-      canvas.width = 1200;
-      canvas.height = Math.ceil(height * canvas.width / width);
-      const context = canvas.getContext('2d');
-      if (!context) throw new Error('No se pudo crear la imagen');
-      context.fillStyle = '#ffffff';
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      context.drawImage(image, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+        // Preserve fractional font sizes that the image renderer rounds down.
+        try {
+          elements.forEach((element) => {
+            element.setAttribute(fontAttribute, getComputedStyle(element).fontSize);
+          });
+          svgUrl = await toSvg(node, {
+            ...options,
+            width,
+            height,
+            backgroundColor: '#ffffff',
+            fontEmbedCSS,
+          });
+        } finally {
+          elements.forEach((element, index) => {
+            const previous = previousAttributes[index];
+            if (previous === null) element.removeAttribute(fontAttribute);
+            else element.setAttribute(fontAttribute, previous);
+          });
+        }
+
+        const svg = new DOMParser().parseFromString(
+          decodeURIComponent(svgUrl.slice(svgUrl.indexOf(',') + 1)),
+          'image/svg+xml',
+        );
+        svg.querySelectorAll<HTMLElement | SVGElement>(`[${fontAttribute}]`).forEach(
+          (element) => {
+            element.style.fontSize = element.getAttribute(fontAttribute)!;
+            element.removeAttribute(fontAttribute);
+          },
+        );
+        // Keep the header's final margin outside its natural height, as on the page.
+        const header = svg.querySelector<HTMLElement>('header');
+        if (header) header.style.height = 'auto';
+        const image = new window.Image();
+        image.decoding = 'async';
+        image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(new XMLSerializer().serializeToString(svg.documentElement))}`;
+        await image.decode();
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        const canvas = document.createElement('canvas');
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('No se pudo crear la imagen');
+        context.fillStyle = '#ffffff';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, 'image/png'),
+        );
+      }
       if (!blob) throw new Error('No se generó la imagen');
 
       const url = URL.createObjectURL(blob);
@@ -681,7 +735,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background px-3 py-3 sm:px-5 sm:py-4">
-      <div className="mx-auto w-full max-w-5xl lg:max-w-[50rem]">
+      <div className="mx-auto w-full max-w-5xl lg:max-w-[66rem]">
         <header className="mb-3 border-b pb-2">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">
@@ -694,7 +748,7 @@ export default function Home() {
         </header>
 
         <div className="grid gap-0 bg-transparent lg:grid-cols-12">
-          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-2 lg:items-start lg:gap-4">
+          <div className="grid gap-3 bg-transparent lg:col-span-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.6fr)_minmax(0,1fr)] lg:items-start lg:gap-4">
             <div className="grid gap-3 lg:contents">
               <section
                 className="min-w-0 overflow-hidden rounded-2xl border border-sky-200/80 bg-white shadow-[0_8px_22px_rgb(15_73_122/12%)] lg:col-start-1 lg:row-start-1"
@@ -848,7 +902,7 @@ export default function Home() {
                 </div>
               </section>
 
-              <div className="grid min-w-0 gap-2 lg:col-start-2 lg:row-start-1 lg:flex lg:h-full lg:flex-col">
+              <div className="grid min-w-0 gap-2 lg:col-start-3 lg:row-start-1 lg:flex lg:h-full lg:flex-col">
               <section
                 className="min-w-0 rounded-2xl border border-sky-200/90 bg-white p-3 shadow-[0_8px_22px_rgb(15_73_122/10%)]"
                 aria-labelledby="proposalDataTitle"
@@ -869,14 +923,19 @@ export default function Home() {
                         className="size-4 shrink-0 text-primary"
                         aria-hidden="true"
                       />
-                      <input
+                      <select
                         id="advisorName"
                         name="advisorName"
-                        type="text"
                         value={advisorName}
-                        onChange={(event) => setAdvisorName(event.target.value)}
+                        onChange={(event) => updateAdvisor(event.target.value)}
                         className="min-w-0 flex-1 bg-transparent text-base font-medium text-slate-950 outline-none lg:text-sm"
-                      />
+                      >
+                        {ADVISORS.map((advisor) => (
+                          <option key={advisor.name} value={advisor.name}>
+                            {advisor.name}
+                          </option>
+                        ))}
+                      </select>
                     </span>
                   </label>
                   <label className="block" htmlFor="advisorPhone">
@@ -1157,8 +1216,19 @@ export default function Home() {
               </div>
             </div>
 
+            <figure className="hidden min-w-0 lg:col-start-2 lg:row-start-2 lg:block">
+              <Image
+                src="/assets/pandero-sorteo-vertical.png"
+                alt="Qué es Pandero y los beneficios del sorteo mensual"
+                width={649}
+                height={1479}
+                sizes="(min-width: 1100px) 237px, (min-width: 1024px) 22vw, 1px"
+                className="h-auto w-full object-contain"
+              />
+            </figure>
+
             <div className="flex flex-col gap-3 bg-transparent lg:contents">
-              <div ref={auctionSummaryRef} className="min-w-0 lg:col-start-2 lg:row-start-2">
+              <div ref={auctionSummaryRef} className="min-w-0 lg:col-start-3 lg:row-start-2">
                   <AuctionSimulationSection
                     advisorName={advisorName}
                     advisorPhone={advisorPhone}
@@ -1181,7 +1251,7 @@ export default function Home() {
               </div>
 
               <section
-                className="relative order-3 overflow-hidden rounded-3xl border border-cyan-200/80 bg-[radial-gradient(circle_at_50%_22%,rgba(56,189,248,0.5),transparent_34%),linear-gradient(180deg,#0f3ca8_0%,#075fd4_48%,#e0f2fe_100%)] px-3.5 pb-3.5 pt-0 shadow-[0_12px_28px_rgba(15,63,150,0.28)] ring-1 ring-white/40 min-[420px]:px-4 min-[420px]:pb-4 lg:col-start-2 lg:row-start-3"
+                className="relative order-3 overflow-hidden rounded-3xl border border-cyan-200/80 bg-[radial-gradient(circle_at_50%_22%,rgba(56,189,248,0.5),transparent_34%),linear-gradient(180deg,#0f3ca8_0%,#075fd4_48%,#e0f2fe_100%)] px-3.5 pb-3.5 pt-0 shadow-[0_12px_28px_rgba(15,63,150,0.28)] ring-1 ring-white/40 min-[420px]:px-4 min-[420px]:pb-4 lg:col-start-3 lg:row-start-3"
                 aria-label="Plan de cuotas"
               >
                 <figure
